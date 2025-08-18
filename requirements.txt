@@ -1,0 +1,27 @@
+fastapi
+uvicorn[standard]
+jinja2
+python-multipart
+yt-dlp
+pydantic
+python-dotenv
+
+# Transcrição - PyTorch com CUDA
+--index-url https://download.pytorch.org/whl/cu124
+torch
+torchvision
+torchaudio
+
+# Transcrição - Whisper backends
+git+https://github.com/openai/whisper.git
+faster-whisper
+
+# FFmpeg fallback (se não estiver no sistema)
+imageio-ffmpeg
+
+# Desenvolvimento
+pytest
+flake8
+black
+isort
+pre-commit

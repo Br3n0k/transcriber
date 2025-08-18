@@ -1,6 +1,7 @@
 development_plan.md
 /.venv
 *.txt
+!requirements.txt
 __pycache__/
 *.py[cod]
 *$py.class
@@ -15,4 +16,3 @@ coverage.xml
 *.cover
 *.py,cover
 .hypothesis/
-start.ps1
