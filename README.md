@@ -5,10 +5,13 @@
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](https://github.com/Br3n0k/transcriber/pulls)
 ---
 
-# Transcriber
+# Transcriber  
 
-A fast, friendly, and open-source web app for transcribing audio and video with Whisper.
+**AI transcription without the cloud.**  
+An open-source web app powered by Whisper that lets you transcribe audio and video locally — private, fast, and developer-friendly.  
+
 Developed by [Brendown Ferreira](https://github.com/Br3n0k).
+
 
 Easily upload local files or paste a YouTube URL, watch a sleek progress overlay, and download your transcript as `.txt`.
 Built with **FastAPI, Jinja2, Tailwind, and Alpine.js** — lightweight, modern, and easy to hack on.
