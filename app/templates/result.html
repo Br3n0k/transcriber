@@ -1,0 +1,12 @@
+{% extends 'base.html' %}
+{% block content %}
+<section class="max-w-3xl mx-auto px-4 py-10">
+  <h2 class="text-2xl font-semibold mb-4">Resultado da Transcrição</h2>
+  <div class="bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-6 whitespace-pre-wrap">
+    {{ text }}
+  </div>
+  <div class="mt-6">
+    <a class="btn btn-accent" href="/download/{{ filename }}">Baixar (txt)</a>
+  </div>
+</section>
+{% endblock %}

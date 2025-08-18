@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="pt-br" x-data="{ dark: localStorage.getItem('theme') === 'dark' }" x-init="$watch('dark', v => {localStorage.setItem('theme', v ? 'dark' : 'light'); document.documentElement.classList.toggle('dark', v)})">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{ theme and theme.primary and 'Transcriber' or 'Transcriber' }}</title>
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    :root { --color-primary: {{ theme.primary }}; --color-secondary: {{ theme.secondary }}; --color-accent: {{ theme.accent }}; }
+    .text-primary { color: var(--color-primary); }
+    .bg-primary { background-color: var(--color-primary); }
+    .btn { padding: 0.5rem 1rem; border-radius: 0.5rem; color: #ffffff; display: inline-block; }
+    .btn-primary { background-color: var(--color-primary); }
+    .btn-secondary { background-color: var(--color-secondary); }
+    .btn-accent { background-color: var(--color-accent); }
+  </style>
+</head>
+<body class="bg-white text-gray-900 dark:bg-gray-900 dark:text-gray-100 min-h-screen flex flex-col">
+  <header class="border-b border-gray-200 dark:border-gray-800">
+    <div class="max-w-5xl mx-auto px-4 py-4 flex items-center justify-between">
+      <a href="/" class="text-xl font-semibold text-primary">Transcriber</a>
+      <div class="flex items-center gap-4">
+        <a href="/history" class="text-sm hover:underline">Histórico</a>
+        <button class="px-3 py-1 rounded border border-gray-300 dark:border-gray-700 text-sm" @click="dark = !dark">
+          <span x-show="!dark">Dark</span>
+          <span x-show="dark">Light</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="flex-1">
+    {% block content %}{% endblock %}
+  </main>
+
+  <!-- Overlay de carregamento com progresso -->
+  <div id="loading-overlay" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden z-50 flex items-center justify-center">
+    <div class="bg-white dark:bg-gray-900 rounded-xl p-8 w-11/12 max-w-md shadow-xl border border-gray-200 dark:border-gray-700 text-center">
+      <h3 class="text-lg font-semibold mb-4">Transcrevendo...</h3>
+      <div class="w-full bg-gray-200 dark:bg-gray-800 rounded-full h-3 mb-3 overflow-hidden">
+        <div id="loading-bar" class="h-3 rounded-full bg-primary w-0"></div>
+      </div>
+      <div class="text-sm text-gray-600 dark:text-gray-300">
+        <span id="loading-percent">0%</span> concluído. Por favor, aguarde.
+      </div>
+    </div>
+  </div>
+
+  <footer class="border-t border-gray-200 dark:border-gray-800">
+    <div class="max-w-5xl mx-auto px-4 py-6 text-sm text-gray-500">
+      © {{ 2025 }} Transcriber — Open Source - Development by <a href="https://github.com/Br3n0k" target="_blank" rel="noopener">Brendown Ferreira</a>
+    </div>
+  </footer>
+
+  <script>
+  (function(){
+    let overlay, bar, percentEl, timer = null, progress = 0;
+    function showOverlay() {
+      overlay.classList.remove('hidden');
+      progress = 0;
+      bar.style.width = '0%';
+      percentEl.textContent = '0%';
+      timer = setInterval(() => {
+        if (progress < 90) {
+          const step = Math.max(0.2, Math.random() * 2.5);
+          progress = Math.min(90, progress + step);
+          bar.style.width = progress.toFixed(0) + '%';
+          percentEl.textContent = progress.toFixed(0) + '%';
+        }
+      }, 200);
+    }
+    function completeOverlay() {
+      if (timer) { clearInterval(timer); timer = null; }
+      progress = 100;
+      bar.style.width = '100%';
+      percentEl.textContent = '100%';
+    }
+    function hideOverlay() {
+      if (timer) { clearInterval(timer); timer = null; }
+      overlay.classList.add('hidden');
+    }
+    async function handleFormSubmit(e) {
+      const form = e.target;
+      if (!(form instanceof HTMLFormElement)) return;
+      e.preventDefault();
+      showOverlay();
+      try {
+        const action = form.getAttribute('action') || window.location.pathname;
+        const method = (form.getAttribute('method') || 'GET').toUpperCase();
+        let response;
+        if (form.enctype === 'multipart/form-data' || form.querySelector('input[type="file"]')) {
+          const fd = new FormData(form);
+          response = await fetch(action, { method, body: fd });
+        } else {
+          const fd = new FormData(form);
+          const params = new URLSearchParams();
+          for (const [k, v] of fd.entries()) { params.append(k, String(v)); }
+          response = await fetch(action, {
+            method,
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: params.toString()
+          });
+        }
+        completeOverlay();
+        const html = await response.text();
+        document.open();
+        document.write(html);
+        document.close();
+      } catch (err) {
+        console.error('Falha na transcrição:', err);
+        hideOverlay();
+        alert('Ocorreu um erro durante a transcrição. Verifique o servidor e tente novamente.');
+      }
+    }
+    function attach() {
+      overlay = document.getElementById('loading-overlay');
+      bar = document.getElementById('loading-bar');
+      percentEl = document.getElementById('loading-percent');
+      const ytForm = document.getElementById('yt-form');
+      const uploadForm = document.getElementById('upload-form');
+      if (ytForm) ytForm.addEventListener('submit', handleFormSubmit);
+      if (uploadForm) uploadForm.addEventListener('submit', handleFormSubmit);
+    }
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', attach);
+    } else {
+      attach();
+    }
+  })();
+  </script>
+</body>
+</html>

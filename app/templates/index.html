@@ -1,0 +1,22 @@
+{% extends 'base.html' %}
+{% block content %}
+<section class="max-w-3xl mx-auto px-4 py-12">
+  <h1 class="text-3xl font-bold mb-6">Transcreva vídeos do YouTube ou arquivos locais</h1>
+
+  <div class="bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-6 space-y-6">
+    <form id="yt-form" class="space-y-4" action="/transcribe/youtube" method="post">
+      <label class="block text-sm font-medium" for="yt-url">URL do YouTube</label>
+      <input id="yt-url" name="url" type="url" required placeholder="https://youtube.com/watch?v=..." class="w-full px-3 py-2 rounded border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900" />
+      <button type="submit" class="btn btn-primary">Transcrever do YouTube</button>
+    </form>
+
+    <div class="text-center text-sm text-gray-500">ou</div>
+
+    <form id="upload-form" class="space-y-4" action="/transcribe/upload" method="post" enctype="multipart/form-data">
+      <label class="block text-sm font-medium" for="local-file">Arquivo local (.mp3, .mp4, .wav)</label>
+      <input id="local-file" name="file" type="file" accept="audio/*,video/*" required class="w-full px-3 py-2 rounded border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900" />
+      <button type="submit" class="btn btn-secondary">Transcrever arquivo</button>
+    </form>
+  </div>
+</section>
+{% endblock %}
