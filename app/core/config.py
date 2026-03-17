@@ -20,6 +20,10 @@ class Settings(BaseModel):
     
     # Auto-setup FFmpeg
     ffmpeg_auto_setup: bool = os.getenv("FFMPEG_AUTO_SETUP", "true").lower() == "true"
+    
+    # Whisper Settings
+    whisper_model_default: str = os.getenv("WHISPER_MODEL", "base")
+    whisper_device_fallback: str = os.getenv("WHISPER_DEVICE", "cpu") # 'cuda' or 'cpu' forced preference
 
 
 settings = Settings()

@@ -8,13 +8,11 @@
 # Transcriber  
 
 **AI transcription without the cloud.**  
-An open-source web app powered by Whisper that lets you transcribe audio and video locally — private, fast, and developer-friendly.  
+An open-source, **privacy-first** web application powered by **OpenAI Whisper** and **FastAPI**. Transcribe YouTube videos or local audio/video files instantly on your machine — no data leaks, no subscription fees.
 
 Developed by [Brendown Ferreira](https://github.com/Br3n0k).
 
-
-Easily upload local files or paste a YouTube URL, watch a sleek progress overlay, and download your transcript as `.txt`.
-Built with **FastAPI, Jinja2, Tailwind, and Alpine.js** — lightweight, modern, and easy to hack on.
+Built with **FastAPI**, **WebSockets**, **Alpine.js**, and **Tailwind CSS** for a modern, real-time experience.
 
 ![Preview](./preview.png)
 
@@ -22,26 +20,30 @@ Built with **FastAPI, Jinja2, Tailwind, and Alpine.js** — lightweight, modern,
 
 ## ✨ Features
 
-* 🎥 Transcribe from YouTube URLs or local audio/video files
-* ⚡ Two Whisper backends with automatic fallback:
-
-  * **openai-whisper** (preferred when FFmpeg is available)
-  * **faster-whisper** (fallback, works even without FFmpeg)
-* 🚀 GPU acceleration (CUDA) when available, seamless CPU fallback otherwise
-* 🔎 Robust FFmpeg detection (auto-install via `imageio-ffmpeg` or `PATH`)
-* 🌓 Clean UI with dark/light mode, progress bar, and smooth overlay
-* 📜 Transcript history with one-click download
-* 🧹 Temporary media cleanup after transcription
-* ✅ Health check endpoint for quick status
+* 🎥 **YouTube & Local Support:** Transcribe directly from YouTube URLs or upload `.mp3`, `.mp4`, `.wav`, and more.
+* 🚀 **Real-Time Progress:** Watch the transcription status live via **WebSockets** — no more guessing when it finishes.
+* 🤖 **Dual AI Engine:**
+  * **openai-whisper**: High accuracy (default when FFmpeg is available).
+  * **faster-whisper**: Blazing fast inference with seamless fallback.
+* ⚡ **GPU Acceleration:** Automatic **CUDA** support for NVIDIA GPUs, with robust CPU fallback.
+* 🛠 **Zero-Config Setup:**
+  * **Auto-FFmpeg:** Automatically detects or installs FFmpeg locally (Windows/Linux/Mac).
+  * **yt-dlp Python API:** Robust media downloading without external binary dependencies.
+* 🐳 **Production Ready:** Optimized **Docker** image (multi-stage build, non-root user, secure).
+* 🌓 **Modern UI:** Dark/light mode, responsive design, and history management.
 
 ---
 
 ## 🛠 Tech Stack
 
-* **Backend:** FastAPI, Uvicorn
-* **Frontend:** Jinja2 templates, Tailwind (CDN), Alpine.js
-* **Media & ML:** yt-dlp, Whisper (openai-whisper + faster-whisper), PyTorch
-* **Utilities:** python-dotenv, pydantic
+* **Backend:** Python 3.13+, FastAPI, Uvicorn, WebSockets
+* **Frontend:** Jinja2 Templates, Alpine.js (Reactive UI), Tailwind CSS
+* **AI & Media:** 
+  * `openai-whisper` & `faster-whisper` (ASR Models)
+  * `yt-dlp` (Python API)
+  * `imageio-ffmpeg` (Auto-setup)
+  * `torch` (PyTorch with CUDA 12.4 support)
+* **DevOps:** Docker (Multi-stage), GitHub Actions (CI), Pytest
 
 ---
 
@@ -49,42 +51,45 @@ Built with **FastAPI, Jinja2, Tailwind, and Alpine.js** — lightweight, modern,
 
 ```txt
 app/
- ├─ main.py                # FastAPI app + router registration
+ ├─ main.py                # App entry point & router registration
  ├─ core/
- │   ├─ config.py          # Environment + directories
- │   └─ theme.py           # Default theme + template globals
+ │   ├─ config.py          # Environment settings (Pydantic)
+ │   └─ theme.py           # UI theming logic
  ├─ routers/
- │   ├─ home.py            # GET /
- │   ├─ upload.py          # POST /transcribe/*
- │   └─ history.py         # GET /history
+ │   ├─ home.py            # UI: Homepage
+ │   ├─ upload.py          # API: Handle file/YouTube uploads
+ │   ├─ websocket.py       # API: Real-time progress updates
+ │   └─ history.py         # UI: Transcription history
  ├─ services/
- │   ├─ youtube.py         # YouTube download logic
- │   ├─ transcriber.py     # FFmpeg detection + Whisper backends
- │   └─ file_manager.py    # File save/load/transcript listing
+ │   ├─ progress.py        # Task state management
+ │   ├─ youtube.py         # yt-dlp integration
+ │   ├─ transcriber.py     # Whisper engine & FFmpeg logic
+ │   └─ file_manager.py    # File I/O operations
  ├─ scripts/
- │   └─ setup_ffmpeg.py    # Auto-install FFmpeg local binary
- ├─ templates/             # Jinja2 templates (UI)
- └─ static/                # CSS, JS, etc.
+ │   └─ setup_ffmpeg.py    # Auto-installer for FFmpeg
+ ├─ templates/             # Jinja2 + Alpine.js templates
+ └─ static/                # Assets
 storage/
- ├─ uploads/
- └─ transcriptions/
-tests/                     # End-to-end validation scripts
+ ├─ uploads/               # Temporary media files
+ └─ transcriptions/        # Generated .txt files
+tests/                     # Unit & Integration tests
 ```
 
 ---
 
 ## ⚙️ Requirements
 
-* Python **3.10+**
-* **FFmpeg** (installed automatically on first run via `setup_ffmpeg.py` if missing)
-* NVIDIA GPU + CUDA (optional, for acceleration)
+* **Python 3.10+** (Tested on 3.13)
+* **FFmpeg**: Installed automatically on first run (or via system PATH).
+* **NVIDIA GPU** (Optional): For faster transcription.
 
-> On Windows, requirements.txt pins the CUDA 12.4 wheel index for PyTorch.
-> CPU-only mode works out of the box.
+> **Note:** The `requirements.txt` includes `--extra-index-url` to ensure the correct PyTorch version with CUDA 12.4 support is installed.
 
 ---
 
 ## 🚀 Quickstart
+
+### Local Development
 
 **Windows (PowerShell):**
 
@@ -110,72 +115,71 @@ Then open: [http://localhost:8000](http://localhost:8000)
 
 ## 🐳 Run with Docker
 
+Build an optimized, secure container:
+
 ```bash
-docker build -t transcribe-hub .
-docker run --rm -p 8000:8000 transcribe-hub
+docker build -t transcriber .
+docker run --rm -p 8000:8000 transcriber
 ```
 
-For GPU support, enable [NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/overview.html).
+**For GPU Support (NVIDIA):**
+Ensure [NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/overview.html) is installed.
+
+```bash
+docker run --rm --gpus all -p 8000:8000 transcriber
+```
 
 ---
 
 ## 📖 Usage
 
-* Go to `/` → paste a YouTube URL or upload a file
-* Watch the progress overlay
-* View transcript + download as `.txt`
-* Visit `/history` to browse past transcripts
+1. **Home:** Paste a YouTube link or drag & drop an audio/video file.
+2. **Process:** Watch the real-time progress bar as the AI processes your media.
+3. **Result:** View the transcript instantly and download it as `.txt`.
+4. **History:** Access your past transcriptions anytime.
 
-**Endpoints:**
+**Key Endpoints:**
 
-* `GET /` → UI
-* `POST /transcribe/youtube` → YouTube → transcript
-* `POST /transcribe/upload` → Local file → transcript
-* `GET /history` → List transcripts
-* `GET /download/{filename}` → Download transcript
-* `GET /health` → Health check
+* `GET /` → Web Interface
+* `POST /transcribe/youtube` → Start YouTube job
+* `POST /transcribe/upload` → Start File job
+* `WS /ws/progress/{task_id}` → Real-time status stream
 
 ---
 
 ## 🧪 Testing
 
-Run all tests with:
+The project uses `pytest` with extensive mocking to ensure stability without downloading large models/files during tests.
 
 ```bash
 pytest
 ```
 
-Key tests include:
-
-* `test_imports.py` → ML/media library checks
-* `test_download.py` → yt-dlp validation
-* `test_transcribe_direct.py` → Direct transcription flow
-* `test_call_api.py` → API endpoint validation
-
 ---
 
 ## 🤝 Contributing
 
-Contributions are welcome! 🎉
-Whether it’s bug fixes, features, or docs:
+We love open source! 💜  
+Feel free to open an issue or submit a PR.
 
-1. Fork the repo
-2. Create a branch (`feature/my-idea`)
-3. Commit & push
-4. Open a Pull Request
+1. Fork the repo.
+2. Create a branch: `git checkout -b feature/amazing-idea`.
+3. Commit changes: `git commit -m 'Add amazing idea'`.
+4. Push to branch: `git push origin feature/amazing-idea`.
+5. Open a Pull Request.
 
 ---
 
 ## 🧩 Troubleshooting
 
-* **FFmpeg not found:** The app tries to auto-install it. Check `.env` for `FFMPEG_AUTO_SETUP=true`.
-* **GPU not used:** check CUDA drivers and run `torch.cuda.is_available()`
-* **Large files slow:** progress bar is an estimate; consider SSE/WebSockets for real-time updates
+* **FFmpeg Error:** The app tries to auto-install FFmpeg. If it fails, check `FFMPEG_AUTO_SETUP=true` in `.env` or install FFmpeg manually.
+* **Slow Transcription:** Ensure your GPU is detected. Check console logs for `usando CUDA`.
+* **WebSocket Error:** If behind a proxy (Nginx/Apache), ensure WebSocket upgrades are allowed.
 
 ---
 
 ## 📜 License
 
-Open Source — see [LICENSE](./LICENSE).
+Distributed under the MIT License. See [LICENSE](./LICENSE) for more information.
 
 ---

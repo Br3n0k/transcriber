@@ -36,7 +36,8 @@ async def process_transcription(task_id: str, media_path: Path, original_filenam
                 logger.error(f"Erro no callback de progresso: {e}")
 
         # Executar transcrição
-        text = await asyncio.to_thread(transcribe_file, media_path, "base", sync_callback)
+        # Se passar None no model_name, usa o default do settings (base)
+        text = await asyncio.to_thread(transcribe_file, media_path, None, sync_callback)
         
         stem = get_unique_stem(original_filename)
         out_path = save_transcription(text, stem, ".txt")

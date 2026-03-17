@@ -12,6 +12,8 @@ try:
 except Exception:
     torch = None  # type: ignore
 
+from ..core.config import settings
+
 logger = logging.getLogger(__name__)
 
 
@@ -57,7 +59,7 @@ def _check_ffmpeg_available() -> bool:
 
 def transcribe_file(
     media_path: Path, 
-    model_name: str = "base", 
+    model_name: str | None = None, 
     progress_callback: Optional[Callable[[int, str], None]] = None
 ) -> str:
     """Transcribe media file to text using Whisper backend.
@@ -69,9 +71,12 @@ def transcribe_file(
     
     Args:
         media_path: Caminho do arquivo.
-        model_name: Modelo do Whisper (base, small, medium, etc).
+        model_name: Modelo do Whisper (base, small, medium, etc). Se None, usa config.
         progress_callback: Função para reportar progresso (0-100) e mensagem.
     """
+    if model_name is None:
+        model_name = settings.whisper_model_default
+
     if progress_callback:
         progress_callback(0, "Iniciando transcrição...")
 
@@ -83,9 +88,22 @@ def transcribe_file(
     else:
         logger.info("ffmpeg disponível; openai-whisper habilitado")
 
-    # Preferir GPU (CUDA) se disponível, senão CPU
-    gpu_available = bool(torch is not None and getattr(torch.cuda, "is_available", lambda: False)())
-    device = "cuda" if gpu_available else "cpu"
+    # Preferir GPU (CUDA) se disponível, senão CPU (ou conforme config)
+    force_device = settings.whisper_device_fallback.lower()
+    
+    if force_device == "cuda":
+        gpu_available = bool(torch is not None and getattr(torch.cuda, "is_available", lambda: False)())
+        if not gpu_available:
+            logger.warning("Configurado WHISPER_DEVICE=cuda, mas CUDA não está disponível. Recuando para CPU.")
+            device = "cpu"
+        else:
+            device = "cuda"
+    elif force_device == "cpu":
+        device = "cpu"
+        gpu_available = False # Forçar modo CPU
+    else: # auto
+        gpu_available = bool(torch is not None and getattr(torch.cuda, "is_available", lambda: False)())
+        device = "cuda" if gpu_available else "cpu"
 
     # Logar diagnóstico do dispositivo/ambiente
     try:
