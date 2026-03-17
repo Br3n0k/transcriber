@@ -1,67 +1,57 @@
 from __future__ import annotations
 from pathlib import Path
-import subprocess
-import sys
-import tempfile
+import logging
 from typing import Literal, Optional
-import time
+import yt_dlp
 
 from ..core.config import settings
 
+logger = logging.getLogger(__name__)
 
 def download_from_youtube(url: str, audio_only: bool = True) -> Path:
-    """Download media from YouTube using yt-dlp and return local file path.
-
-    If audio_only=True, prefer direct audio (m4a) without postprocessing to avoid ffmpeg.
-    """
+    """Download media from YouTube using yt-dlp Python API and return local file path."""
     out_dir = settings.storage_uploads
     out_dir.mkdir(parents=True, exist_ok=True)
 
     # Template: title + id to avoid collisions
     out_tmpl = str(out_dir / "%(title)s-%(id)s.%(ext)s")
 
-    # Build command
-    cmd = [
-        sys.executable,
-        "-m",
-        "yt_dlp",
-        "-o",
-        out_tmpl,
-        url,
-    ]
-    if audio_only:
-        # Prefer an audio-only stream in m4a if available, else bestaudio.
-        # Avoid --extract-audio to not require ffmpeg at runtime.
-        cmd.extend(["-f", "bestaudio[ext=m4a]/bestaudio"])
-    else:
-        cmd.extend(["-f", "bestvideo+bestaudio/best"]) 
+    ydl_opts = {
+        'outtmpl': out_tmpl,
+        'quiet': True,
+        'no_warnings': True,
+        # Prefer audio-only stream in m4a if available, else bestaudio.
+        'format': 'bestaudio[ext=m4a]/bestaudio' if audio_only else 'bestvideo+bestaudio/best',
+    }
 
-    # Snapshot before download
-    before = {p.name for p in out_dir.glob("*") if p.is_file()}
-    started_at = time.time()
-
-    subprocess.run(cmd, check=True)
-
-    # Allowed media extensions
-    allowed_exts = {".mp3", ".m4a", ".mp4", ".webm", ".wav", ".mkv", ".ogg", ".flac", ".m4v"}
-
-    # Prefer files created after we started and not present before
-    new_candidates = [
-        p for p in out_dir.glob("*")
-        if p.is_file()
-        and p.suffix.lower() in allowed_exts
-        and (p.name not in before or p.stat().st_mtime >= started_at - 1)
-    ]
-
-    if new_candidates:
-        return max(new_candidates, key=lambda p: p.stat().st_mtime)
-
-    # Fallback: pick most recent media file in the directory (ignore .keep and non-media)
-    candidates = sorted(
-        [p for p in out_dir.glob("*") if p.is_file() and p.suffix.lower() in allowed_exts],
-        key=lambda p: p.stat().st_mtime,
-        reverse=True,
-    )
-    if not candidates:
-        raise RuntimeError("Falha ao baixar o conteúdo do YouTube (nenhum arquivo de mídia encontrado).")
-    return candidates[0]
+    try:
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            logger.info(f"Iniciando download do YouTube: {url}")
+            # extract_info com download=True baixa e retorna metadados
+            info = ydl.extract_info(url, download=True)
+            
+            # prepare_filename retorna o nome esperado do arquivo
+            # Nota: se o yt-dlp fizer merge (video+audio) ou converter, o nome final pode mudar.
+            # Mas como estamos pedindo bestaudio[ext=m4a], geralmente é direto.
+            # Se for playlist, info é uma lista, mas aqui assumimos vídeo único ou pegamos o primeiro.
+            
+            if 'entries' in info:
+                # É uma playlist ou resultado de busca
+                info = info['entries'][0]
+            
+            filename = ydl.prepare_filename(info)
+            path = Path(filename)
+            
+            if not path.exists():
+                # Às vezes o yt-dlp muda a extensão se fizer pós-processamento não solicitado
+                # Tentar encontrar arquivo com mesmo stem
+                candidates = list(out_dir.glob(f"{path.stem}.*"))
+                if candidates:
+                    path = candidates[0]
+            
+            logger.info(f"Download concluído: {path}")
+            return path
+            
+    except Exception as e:
+        logger.exception(f"Erro ao baixar do YouTube: {e}")
+        raise RuntimeError(f"Falha ao baixar do YouTube: {e}") from e

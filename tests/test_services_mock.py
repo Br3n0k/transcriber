@@ -73,41 +73,28 @@ class TestTranscriber:
         assert callback.call_count >= 1
 
 class TestYoutube:
-    @patch("app.services.youtube.subprocess.run")
-    @patch("pathlib.Path.glob")
-    @patch("pathlib.Path.mkdir")
-    @patch("pathlib.Path.stat")
-    def test_download_youtube(self, mock_stat, mock_mkdir, mock_glob, mock_subprocess):
-        """Testa download do YouTube mockando subprocess e sistema de arquivos."""
+    @patch("app.services.youtube.yt_dlp.YoutubeDL")
+    def test_download_youtube(self, mock_ydl_class):
+        """Testa download do YouTube mockando a classe YoutubeDL."""
         
         # Configurar mocks
-        mock_subprocess.return_value = MagicMock(returncode=0)
+        mock_ydl_instance = MagicMock()
+        mock_ydl_class.return_value.__enter__.return_value = mock_ydl_instance
         
-        # Simular arquivos encontrados
-        fake_file = MagicMock(spec=Path)
-        fake_file.name = "video-123.m4a"
-        fake_file.suffix = ".m4a"
-        fake_file.is_file.return_value = True
-        fake_file.stat.return_value.st_mtime = 2000000000  # Futuro
+        # Simular retorno do extract_info e prepare_filename
+        fake_info = {"id": "123", "title": "Test Video"}
+        mock_ydl_instance.extract_info.return_value = fake_info
         
-        # glob retorna vazio antes, e o arquivo depois (simplificação)
-        # O código original chama glob duas vezes: 'before' e 'new_candidates'
-        # Vamos simular que 'new_candidates' encontra o arquivo
-        mock_glob.side_effect = [
-            [], # before
-            [fake_file], # new_candidates
-            [fake_file] # fallback
-        ]
+        expected_path = Path("/tmp/Test Video-123.m4a")
+        mock_ydl_instance.prepare_filename.return_value = str(expected_path)
         
         # Executar
         path = download_from_youtube("https://youtube.com/watch?v=123")
         
         # Verificar
-        assert path == fake_file
-        mock_subprocess.assert_called_once()
-        args = mock_subprocess.call_args[0][0]
-        assert "yt_dlp" in args
-        assert "https://youtube.com/watch?v=123" in args
+        assert path == expected_path
+        mock_ydl_instance.extract_info.assert_called_once_with("https://youtube.com/watch?v=123", download=True)
+        mock_ydl_instance.prepare_filename.assert_called_once_with(fake_info)
 
 class TestFileManager:
     @patch("app.services.file_manager.settings")
