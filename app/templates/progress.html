@@ -1,0 +1,106 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<section class="max-w-3xl mx-auto px-4 py-12" x-data="progressApp('{{ task_id }}')">
+  <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-8 shadow-sm text-center">
+    
+    <!-- Estado: Processando -->
+    <template x-if="status !== 'completed' && status !== 'failed'">
+      <div class="space-y-6">
+        <h2 class="text-2xl font-bold animate-pulse" x-text="message || 'Iniciando...'"></h2>
+        
+        <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-4 overflow-hidden">
+          <div class="bg-blue-600 h-4 rounded-full transition-all duration-300 ease-out"
+               :style="`width: ${progress}%`"></div>
+        </div>
+        
+        <p class="text-gray-500 dark:text-gray-400 font-mono" x-text="`${progress}%`"></p>
+        
+        <div class="text-sm text-gray-400 mt-4">
+          Task ID: <span class="font-mono text-xs select-all" x-text="taskId"></span>
+        </div>
+      </div>
+    </template>
+
+    <!-- Estado: Concluído -->
+    <template x-if="status === 'completed'">
+      <div class="space-y-6 text-left">
+        <div class="flex items-center justify-between border-b pb-4 mb-4 border-gray-100 dark:border-gray-700">
+          <h2 class="text-2xl font-semibold text-green-600 dark:text-green-400">Transcrição Concluída!</h2>
+          <a :href="`/download/${result.filename}`" class="btn btn-primary text-sm">Baixar Arquivo (.txt)</a>
+        </div>
+        
+        <div class="bg-gray-50 dark:bg-gray-900 p-4 rounded border border-gray-200 dark:border-gray-700 font-mono text-sm whitespace-pre-wrap max-h-[60vh] overflow-y-auto"
+             x-text="result.text"></div>
+             
+        <div class="text-center pt-4">
+          <a href="/" class="text-blue-600 hover:underline">Transcrever outro arquivo</a>
+        </div>
+      </div>
+    </template>
+
+    <!-- Estado: Falha -->
+    <template x-if="status === 'failed'">
+      <div class="space-y-6">
+        <div class="text-red-500 text-6xl mb-4">⚠️</div>
+        <h2 class="text-2xl font-bold text-red-600">Erro na Transcrição</h2>
+        <p class="text-gray-700 dark:text-gray-300" x-text="message"></p>
+        <div class="pt-6">
+          <a href="/" class="btn btn-secondary">Tentar Novamente</a>
+        </div>
+      </div>
+    </template>
+
+  </div>
+</section>
+
+<script>
+  function progressApp(taskId) {
+    return {
+      taskId: taskId,
+      status: 'pending', // pending, processing, completed, failed
+      progress: 0,
+      message: 'Conectando...',
+      result: null,
+      socket: null,
+      
+      init() {
+        this.connect();
+      },
+      
+      connect() {
+        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+        const wsUrl = `${protocol}//${window.location.host}/ws/progress/${this.taskId}`;
+        
+        this.socket = new WebSocket(wsUrl);
+        
+        this.socket.onopen = () => {
+          console.log('WS Connected');
+        };
+        
+        this.socket.onmessage = (event) => {
+          const data = JSON.parse(event.data);
+          this.status = data.status;
+          this.progress = data.progress;
+          this.message = data.message;
+          
+          if (data.result) {
+            this.result = data.result;
+          }
+          
+          if (this.status === 'completed' || this.status === 'failed') {
+            this.socket.close();
+          }
+        };
+        
+        this.socket.onclose = () => {
+          if (this.status !== 'completed' && this.status !== 'failed') {
+            // Tentar reconectar se cair inesperadamente
+            setTimeout(() => this.connect(), 2000);
+          }
+        };
+      }
+    }
+  }
+</script>
+{% endblock %}

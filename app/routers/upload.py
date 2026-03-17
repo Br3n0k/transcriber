@@ -2,84 +2,97 @@ from __future__ import annotations
 from pathlib import Path
 import os
 import logging
-from fastapi import APIRouter, File, Form, HTTPException, UploadFile, Request
-from fastapi.responses import HTMLResponse, RedirectResponse
+import uuid
+import asyncio
+from fastapi import APIRouter, File, Form, HTTPException, UploadFile, Request, BackgroundTasks
+from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
 from fastapi.templating import Jinja2Templates
 from ..core.config import settings
 from ..services.youtube import download_from_youtube
 from ..services.transcriber import transcribe_file
 from ..services.file_manager import save_upload, save_transcription, get_unique_stem
+from ..services.progress import progress_manager
 from ..core.theme import default_theme
 
 router = APIRouter(prefix="/transcribe")
 
 templates = Jinja2Templates(directory=str(settings.templates_dir))
-# Registrar tema padrão como global para os templates
 templates.env.globals["theme"] = default_theme()
 
 logger = logging.getLogger(__name__)
 
-
-@router.post("/youtube", response_class=HTMLResponse)
-async def transcribe_youtube(request: Request, url: str = Form(...)):
-    media_path = None
+async def process_transcription(task_id: str, media_path: Path, original_filename: str):
+    """Função background para processar a transcrição e atualizar o progresso."""
     try:
-        media_path = download_from_youtube(url)
-        text = transcribe_file(media_path)
-        stem = get_unique_stem(media_path.name)
+        # Wrapper para adaptar a assinatura do callback (sync -> async bridge)
+        def sync_callback(p, m):
+            try:
+                # Criar novo loop se necessário, pois estamos numa thread separada
+                loop = asyncio.new_event_loop()
+                asyncio.set_event_loop(loop)
+                loop.run_until_complete(progress_manager.update_progress(task_id, p, m))
+                loop.close()
+            except Exception as e:
+                logger.error(f"Erro no callback de progresso: {e}")
+
+        # Executar transcrição
+        text = await asyncio.to_thread(transcribe_file, media_path, "base", sync_callback)
+        
+        stem = get_unique_stem(original_filename)
         out_path = save_transcription(text, stem, ".txt")
         
-        # Remover o arquivo de áudio após transcrição bem-sucedida
+        # Limpeza
         try:
             if media_path and media_path.exists():
                 media_path.unlink()
-                logger.info(f"Arquivo de áudio removido após transcrição: {media_path}")
-        except Exception as cleanup_err:
-            logger.warning(f"Falha ao remover arquivo de áudio {media_path}: {cleanup_err}")
-        
-        return templates.TemplateResponse(request=request, name="result.html", context={"text": text, "filename": out_path.name})
+        except Exception as e:
+            logger.warning(f"Erro na limpeza: {e}")
+
+        # Atualizar status final
+        await progress_manager.complete_task(task_id, {"filename": out_path.name, "text": text[:200] + "..."})
+
     except Exception as e:
-        # Tentar limpar o arquivo em caso de erro na transcrição
+        logger.exception(f"Erro na tarefa {task_id}")
+        await progress_manager.fail_task(task_id, str(e))
+        # Tentar limpar
         if media_path and media_path.exists():
             try:
                 media_path.unlink()
-                logger.info(f"Arquivo de áudio removido após erro: {media_path}")
-            except Exception as cleanup_err:
-                logger.warning(f"Falha ao remover arquivo de áudio após erro {media_path}: {cleanup_err}")
+            except:
+                pass
+
+@router.post("/youtube", response_class=HTMLResponse)
+async def transcribe_youtube(request: Request, background_tasks: BackgroundTasks, url: str = Form(...)):
+    try:
+        # Download síncrono, mas rápido o suficiente para esperar antes de mostrar progresso
+        media_path = await asyncio.to_thread(download_from_youtube, url)
+        
+        task_id = str(uuid.uuid4())
+        await progress_manager.create_task(task_id)
+        
+        background_tasks.add_task(process_transcription, task_id, media_path, media_path.name)
+        
+        return templates.TemplateResponse(request=request, name="progress.html", context={"task_id": task_id})
+        
+    except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
-
 @router.post("/upload", response_class=HTMLResponse)
-async def transcribe_upload(request: Request, file: UploadFile = File(...)):
-    temp_path = None
-    saved_path = None
+async def transcribe_upload(request: Request, background_tasks: BackgroundTasks, file: UploadFile = File(...)):
     try:
-        temp_path = Path(settings.storage_uploads) / file.filename
+        task_id = str(uuid.uuid4())
+        await progress_manager.create_task(task_id)
+        
+        # Salvar arquivo temporário
+        temp_path = Path(settings.storage_uploads) / f"{task_id}_{file.filename}"
         with temp_path.open("wb") as f:
             while chunk := await file.read(1024 * 1024):
                 f.write(chunk)
-        saved_path = save_upload(temp_path, file.filename)
-        text = transcribe_file(saved_path)
-        stem = get_unique_stem(file.filename)
-        out_path = save_transcription(text, stem, ".txt")
+                
+        # Iniciar background task
+        background_tasks.add_task(process_transcription, task_id, temp_path, file.filename)
         
-        # Remover o arquivo de áudio após transcrição bem-sucedida
-        try:
-            if saved_path and saved_path.exists():
-                saved_path.unlink()
-                logger.info(f"Arquivo de áudio removido após transcrição: {saved_path}")
-        except Exception as cleanup_err:
-            logger.warning(f"Falha ao remover arquivo de áudio {saved_path}: {cleanup_err}")
+        return templates.TemplateResponse(request=request, name="progress.html", context={"task_id": task_id})
         
-        context = {"text": text, "filename": out_path.name}
-        return templates.TemplateResponse(request=request, name="result.html", context=context)
     except Exception as e:
-        # Tentar limpar arquivos em caso de erro na transcrição
-        for path_to_clean in [temp_path, saved_path]:
-            if path_to_clean and path_to_clean.exists():
-                try:
-                    path_to_clean.unlink()
-                    logger.info(f"Arquivo removido após erro: {path_to_clean}")
-                except Exception as cleanup_err:
-                    logger.warning(f"Falha ao remover arquivo após erro {path_to_clean}: {cleanup_err}")
         raise HTTPException(status_code=400, detail=str(e))

@@ -21,15 +21,18 @@ class TestTranscriber:
         mock_model.transcribe.return_value = {"text": "Texto transcodificado"}
         mock_whisper.load_model.return_value = mock_model
         
-        # Mockar o módulo 'whisper' em sys.modules
+        # Mockar o módulo 'whisper' em sys.modules para que 'import whisper' funcione
         with patch.dict(sys.modules, {'whisper': mock_whisper}):
             # Executar
-            result = transcribe_file(Path("fake_audio.mp3"), model_name="base")
+            callback = MagicMock()
+            result = transcribe_file(Path("fake_audio.mp3"), model_name="base", progress_callback=callback)
         
         # Verificar
         assert result == "Texto transcodificado"
         mock_whisper.load_model.assert_called_once_with("base", device="cpu") # Assumes CPU in test env
         mock_model.transcribe.assert_called_once()
+        # Verificar se callback foi chamado (pelo menos inicio e fim)
+        assert callback.call_count >= 2
 
     @patch("app.services.transcriber._check_ffmpeg_available")
     def test_transcribe_faster_whisper(self, mock_check_ffmpeg):
@@ -38,25 +41,36 @@ class TestTranscriber:
         mock_check_ffmpeg.return_value = False
         
         mock_faster_whisper = MagicMock()
-        mock_model = MagicMock()
+        mock_model_cls = MagicMock()
+        mock_model_instance = MagicMock()
+        
+        # Configurar WhisperModel dentro do módulo
+        mock_faster_whisper.WhisperModel = mock_model_cls
+        mock_model_cls.return_value = mock_model_instance
+        
         # faster-whisper retorna (segments, info)
         Segment = MagicMock()
         Segment.text = "Texto faster"
-        mock_model.transcribe.return_value = ([Segment], None)
+        Segment.end = 10.0
         
-        # Configurar WhisperModel dentro do módulo mockado
-        mock_faster_whisper.WhisperModel.return_value = mock_model
+        Info = MagicMock()
+        Info.duration = 20.0
+        
+        mock_model_instance.transcribe.return_value = ([Segment], Info)
         
         # Mockar o módulo 'faster_whisper' em sys.modules
         with patch.dict(sys.modules, {'faster_whisper': mock_faster_whisper}):
             # Executar
-            result = transcribe_file(Path("fake_audio.mp3"), model_name="small")
+            callback = MagicMock()
+            result = transcribe_file(Path("fake_audio.mp3"), model_name="small", progress_callback=callback)
         
         # Verificar
         assert result == "Texto faster"
         mock_check_ffmpeg.assert_called_once()
         # Verifica se tentou instanciar o modelo
-        mock_faster_whisper.WhisperModel.assert_called()
+        mock_model_cls.assert_called()
+        # Verificar callback: inicio, load, seg, fim
+        assert callback.call_count >= 1
 
 class TestYoutube:
     @patch("app.services.youtube.subprocess.run")
@@ -127,9 +141,6 @@ class TestFileManager:
         """Testa geração de nomes únicos."""
         # Simular que 'teste.txt' já existe, mas 'teste-1.txt' não
         def exists_side_effect(path_str):
-            # O código original verifica: (settings.storage_transcriptions / f"{unique}.txt").exists()
-            # O mock do settings retorna um Path mockado.
-            # Vamos simplificar: assumir que o mock de 'exists' será chamado
             pass
             
         # Mock mais profundo: settings.storage_transcriptions / "nome" retorna um Path

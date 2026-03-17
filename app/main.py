@@ -26,11 +26,12 @@ async def download(filename: str):
     return FileResponse(path=str(file_path), filename=filename, media_type="text/plain")
 
 # Include routers (to be implemented)
-from .routers import home, upload, history  # noqa: E402
+from .routers import home, upload, history, websocket  # noqa: E402
 
 app.include_router(home.router)
 app.include_router(upload.router)
 app.include_router(history.router)
+app.include_router(websocket.router)
 
 # Add template globals
 templates.env.globals["theme"] = default_theme()

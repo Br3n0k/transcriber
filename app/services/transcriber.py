@@ -5,6 +5,7 @@ import shutil
 import logging
 import subprocess
 import sys
+from typing import Callable, Optional
 
 try:
     import torch  # type: ignore
@@ -54,14 +55,26 @@ def _check_ffmpeg_available() -> bool:
     return False
 
 
-def transcribe_file(media_path: Path, model_name: str = "base") -> str:
+def transcribe_file(
+    media_path: Path, 
+    model_name: str = "base", 
+    progress_callback: Optional[Callable[[int, str], None]] = None
+) -> str:
     """Transcribe media file to text using Whisper backend.
 
     Priority:
     1) openai-whisper (se ffmpeg disponível)
     2) faster-whisper (fallback sempre disponível)
     Retorna texto puro.
+    
+    Args:
+        media_path: Caminho do arquivo.
+        model_name: Modelo do Whisper (base, small, medium, etc).
+        progress_callback: Função para reportar progresso (0-100) e mensagem.
     """
+    if progress_callback:
+        progress_callback(0, "Iniciando transcrição...")
+
     # Verificar disponibilidade do ffmpeg de forma robusta
     ffmpeg_available = _check_ffmpeg_available()
     
@@ -98,8 +111,20 @@ def transcribe_file(media_path: Path, model_name: str = "base") -> str:
         try:
             import whisper  # type: ignore
             logger.info("tentando backend openai-whisper...")
+            if progress_callback:
+                progress_callback(10, "Carregando modelo openai-whisper...")
+            
             model = whisper.load_model(model_name, device=device)
+            
+            if progress_callback:
+                progress_callback(20, "Processando áudio (isso pode demorar)...")
+            
+            # openai-whisper não tem callback nativo fácil, então pulamos direto pro fim
             result = model.transcribe(str(media_path), fp16=(device == "cuda"))
+            
+            if progress_callback:
+                progress_callback(100, "Transcrição concluída!")
+                
             logger.info(f"backend=openai-whisper device={device} fp16={device == 'cuda'} model={model_name}")
             return result.get("text", "").strip()
         except Exception as e1:
@@ -112,6 +137,9 @@ def transcribe_file(media_path: Path, model_name: str = "base") -> str:
     try:
         from faster_whisper import WhisperModel  # type: ignore
         logger.info("tentando backend faster-whisper...")
+        
+        if progress_callback:
+            progress_callback(10, "Carregando modelo faster-whisper...")
 
         model = None
         if gpu_available:
@@ -125,11 +153,27 @@ def transcribe_file(media_path: Path, model_name: str = "base") -> str:
             model = WhisperModel(model_name, device="cpu", compute_type="int8")
             logger.info("faster-whisper inicializado com CPU (compute_type=int8)")
 
+        if progress_callback:
+            progress_callback(20, "Iniciando segmentação...")
+
         segments, info = model.transcribe(str(media_path))
+        
+        total_duration = info.duration
         text_parts = []
+        
         for seg in segments:
             text_parts.append(seg.text)
+            if progress_callback and total_duration > 0:
+                # Progresso de 20% a 95%
+                current_percent = 20 + int((seg.end / total_duration) * 75)
+                current_percent = min(95, current_percent)
+                progress_callback(current_percent, f"Transcrevendo: {int(seg.end)}s / {int(total_duration)}s")
+
         text = " ".join(t.strip() for t in text_parts).strip()
+        
+        if progress_callback:
+            progress_callback(100, "Finalizando...")
+            
         logger.info(
             f"backend=faster-whisper device={'cuda' if (gpu_available and getattr(model, 'device', 'cpu') == 'cuda') else 'cpu'} compute_type={'float16' if gpu_available else 'int8'} model={model_name}"
         )
