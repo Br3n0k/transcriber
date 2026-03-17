@@ -5,21 +5,25 @@ import os
 
 load_dotenv()
 
-# Define o caminho base do preojeto para a raiz subindo dois níveis
+# Define o caminho base do projeto para a raiz subindo dois níveis
 BASE_DIR = Path(__file__).resolve().parents[2]
 
 
 class Settings(BaseModel):
     app_name: str = "Transcriber"
     debug: bool = os.getenv("DEBUG", "true").lower() == "true"
-    storage_uploads: Path = BASE_DIR / "storage" / "uploads"
-    storage_transcriptions: Path = BASE_DIR / "storage" / "transcriptions"
-    templates_dir: Path = BASE_DIR / "app" / "templates"
-    static_dir: Path = BASE_DIR / "app" / "static"
+    
+    storage_uploads: Path = Path(os.getenv("STORAGE_UPLOADS", str(BASE_DIR / "storage" / "uploads")))
+    storage_transcriptions: Path = Path(os.getenv("STORAGE_TRANSCRIPTIONS", str(BASE_DIR / "storage" / "transcriptions")))
+    templates_dir: Path = Path(os.getenv("TEMPLATES_DIR", str(BASE_DIR / "app" / "templates")))
+    static_dir: Path = Path(os.getenv("STATIC_DIR", str(BASE_DIR / "app" / "static")))
 
 
 settings = Settings()
 
-# Ensure directories exist
-settings.storage_uploads.mkdir(parents=True, exist_ok=True)
-settings.storage_transcriptions.mkdir(parents=True, exist_ok=True)
+# Ensure directories exist (apenas se forem locais, se for um storage remoto montado, pode não precisar, mas o código assume local)
+# Evitar criar se for um device, por exemplo
+if not str(settings.storage_uploads).startswith("/dev"): 
+    settings.storage_uploads.mkdir(parents=True, exist_ok=True)
+if not str(settings.storage_transcriptions).startswith("/dev"):
+    settings.storage_transcriptions.mkdir(parents=True, exist_ok=True)
