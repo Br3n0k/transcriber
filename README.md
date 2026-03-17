@@ -140,7 +140,7 @@ For GPU support, enable [NVIDIA Container Toolkit](https://docs.nvidia.com/datac
 Run all tests with:
 
 ```bash
-pytest -q
+pytest
 ```
 
 Key tests include:

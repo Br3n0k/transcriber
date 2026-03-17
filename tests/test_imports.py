@@ -1,28 +1,28 @@
 #!/usr/bin/env python3
 """Testar importação dos módulos de transcrição."""
+import pytest
 
-import sys
+def test_imports():
+    modules_to_test = [
+        'whisper',
+        'faster_whisper',
+        'torch',
+        'imageio_ffmpeg',
+        # 'ctranslate2', # Dependencies of faster_whisper, might not be direct imports for the app
+        # 'onnxruntime'
+    ]
+    
+    errors = []
+    for module_name in modules_to_test:
+        try:
+            __import__(module_name)
+        except ImportError as e:
+            errors.append(f"{module_name}: {e}")
+            
+    if errors:
+        pytest.fail(f"Falha ao importar módulos: {', '.join(errors)}")
 
-modules_to_test = [
-    'whisper',
-    'faster_whisper',
-    'torch',
-    'imageio_ffmpeg',
-    'ctranslate2',
-    'onnxruntime'
-]
-
-print("Testando importação de módulos...")
-print("-" * 40)
-
-for module_name in modules_to_test:
-    try:
-        __import__(module_name)
-        print(f"✓ {module_name}: OK")
-    except ImportError as e:
-        print(f"✗ {module_name}: ImportError - {e}")
-    except Exception as e:
-        print(f"✗ {module_name}: {type(e).__name__} - {e}")
-
-print("-" * 40)
-print("Teste concluído.")
+if __name__ == "__main__":
+    # Manter compatibilidade com execução direta
+    test_imports()
+    print("Todos os módulos importados com sucesso.")

@@ -5,6 +5,7 @@ import os
 
 load_dotenv()
 
+# Define o caminho base do preojeto para a raiz subindo dois níveis
 BASE_DIR = Path(__file__).resolve().parents[2]
 
 

@@ -18,7 +18,7 @@ fmt:
 	. .venv/Scripts/activate && black app && isort app
 
 test:
-	. .venv/Scripts/activate && pytest -q
+	. .venv/Scripts/activate && pytest
 
 pre-commit:
 	. .venv/Scripts/activate && pre-commit install && pre-commit run --all-files

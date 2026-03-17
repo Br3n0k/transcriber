@@ -1,13 +1,23 @@
-development_plan.md
-/.venv
-*.txt
-!requirements.txt
+# Python Cache
 __pycache__/
+/.pytest_cache/
+
+# Dev Docs
+docs/improvements
+
+# Venv Ambience
+.venv/
+
+# Storage
+storage/uploads/*
+storage/transcriptions/*
+
+*.txt
+
 *.py[cod]
 *$py.class
 *.so
 .Python
-.pytest_cache/
 .coverage
 .coverage.*
 .cache
