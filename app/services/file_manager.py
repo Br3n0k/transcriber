@@ -33,7 +33,7 @@ def list_transcriptions() -> list[Path]:
 
 def get_unique_stem(original_name: str) -> str:
     stem = Path(original_name).stem
-    i = 1
+    i = 0
     unique = stem
     while (settings.storage_transcriptions / f"{unique}.txt").exists():
         i += 1

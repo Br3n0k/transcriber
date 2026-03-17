@@ -4,6 +4,7 @@ import os
 import shutil
 import logging
 import subprocess
+import sys
 
 try:
     import torch  # type: ignore
@@ -16,57 +17,40 @@ logger = logging.getLogger(__name__)
 def _check_ffmpeg_available() -> bool:
     """Verifica se ffmpeg está disponível no sistema.
     
-    Tenta várias estratégias para encontrar ffmpeg:
-    1. Procura no PATH atual
-    2. Tenta usar imageio-ffmpeg
-    3. Verifica se consegue executar ffmpeg
+    Estratégia:
+    1. Verifica se existe na pasta local .bin (criada pelo setup_ffmpeg.py) e adiciona ao PATH.
+    2. Verifica se existe no PATH global.
     """
-    # Primeira tentativa: ffmpeg no PATH
+    # 1. Verificar pasta local .bin (prioridade)
+    # Assumindo que .bin está na raiz do projeto (cwd ou pai de app)
+    # Tenta localizar a raiz baseada no arquivo atual
+    project_root = Path(__file__).resolve().parents[2]
+    local_bin = project_root / ".bin"
+    
+    is_windows = sys.platform.startswith("win")
+    exe_name = "ffmpeg.exe" if is_windows else "ffmpeg"
+    local_ffmpeg = local_bin / exe_name
+    
+    if local_ffmpeg.exists():
+        logger.info(f"FFmpeg local encontrado em: {local_ffmpeg}")
+        # Adicionar ao PATH (no início para ter prioridade)
+        current_path = os.environ.get("PATH", "")
+        if str(local_bin) not in current_path:
+            os.environ["PATH"] = str(local_bin) + os.pathsep + current_path
+            logger.info("Diretório .bin adicionado ao PATH")
+            
+        return True
+
+    # 2. Verificar PATH global
     if shutil.which("ffmpeg"):
         try:
-            # Testa se consegue executar
-            result = subprocess.run(
-                ["ffmpeg", "-version"], 
-                capture_output=True, 
-                timeout=5, 
-                text=True
-            )
-            if result.returncode == 0:
-                logger.info("ffmpeg encontrado e verificado no PATH")
-                return True
-        except Exception as e:
-            logger.warning(f"ffmpeg encontrado no PATH mas falha ao executar: {e}")
-    
-    # Segunda tentativa: usar imageio-ffmpeg
-    try:
-        import imageio_ffmpeg
-        ffexe = imageio_ffmpeg.get_ffmpeg_exe()
-        if ffexe and Path(ffexe).exists():
-            # Adicionar ao PATH para uso posterior
-            ffdir = str(Path(ffexe).parent)
-            current_path = os.environ.get("PATH", "")
-            if ffdir not in current_path:
-                os.environ["PATH"] = ffdir + os.pathsep + current_path
-                logger.info(f"ffmpeg adicionado ao PATH via imageio-ffmpeg: {ffexe}")
+            subprocess.run(["ffmpeg", "-version"], capture_output=True, timeout=5)
+            logger.info("ffmpeg encontrado no PATH global")
+            return True
+        except Exception:
+            pass
             
-            # Verificar se funciona
-            try:
-                result = subprocess.run(
-                    [ffexe, "-version"], 
-                    capture_output=True, 
-                    timeout=5, 
-                    text=True
-                )
-                if result.returncode == 0:
-                    logger.info("ffmpeg verificado via imageio-ffmpeg")
-                    return True
-            except Exception as e:
-                logger.warning(f"ffmpeg via imageio-ffmpeg existe mas falha ao executar: {e}")
-                
-    except Exception as e:
-        logger.warning(f"Falha ao tentar usar imageio-ffmpeg: {e}")
-    
-    logger.warning("ffmpeg não disponível em nenhuma estratégia testada")
+    logger.warning("ffmpeg não encontrado. Execute o script de setup ou instale manualmente.")
     return False
 
 
@@ -106,7 +90,6 @@ def transcribe_file(media_path: Path, model_name: str = "base") -> str:
             else:
                 logger.info(f"usando CPU (torch.cuda.is_available={cuda_is_avail}, torch.version.cuda={cuda_ver})")
     except Exception:
-        # logging não deve impedir a execução
         pass
 
     whisper_err = None
@@ -130,7 +113,6 @@ def transcribe_file(media_path: Path, model_name: str = "base") -> str:
         from faster_whisper import WhisperModel  # type: ignore
         logger.info("tentando backend faster-whisper...")
 
-        # Primeiro tentar com CUDA se disponível; se falhar, tentar CPU automaticamente
         model = None
         if gpu_available:
             try:

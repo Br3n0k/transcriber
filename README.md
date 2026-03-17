@@ -28,7 +28,7 @@ Built with **FastAPI, Jinja2, Tailwind, and Alpine.js** — lightweight, modern,
   * **openai-whisper** (preferred when FFmpeg is available)
   * **faster-whisper** (fallback, works even without FFmpeg)
 * 🚀 GPU acceleration (CUDA) when available, seamless CPU fallback otherwise
-* 🔎 Robust FFmpeg detection (`PATH` and `imageio-ffmpeg`)
+* 🔎 Robust FFmpeg detection (auto-install via `imageio-ffmpeg` or `PATH`)
 * 🌓 Clean UI with dark/light mode, progress bar, and smooth overlay
 * 📜 Transcript history with one-click download
 * 🧹 Temporary media cleanup after transcription
@@ -61,6 +61,8 @@ app/
  │   ├─ youtube.py         # YouTube download logic
  │   ├─ transcriber.py     # FFmpeg detection + Whisper backends
  │   └─ file_manager.py    # File save/load/transcript listing
+ ├─ scripts/
+ │   └─ setup_ffmpeg.py    # Auto-install FFmpeg local binary
  ├─ templates/             # Jinja2 templates (UI)
  └─ static/                # CSS, JS, etc.
 storage/
@@ -74,7 +76,7 @@ tests/                     # End-to-end validation scripts
 ## ⚙️ Requirements
 
 * Python **3.10+**
-* **FFmpeg** (optional but recommended)
+* **FFmpeg** (installed automatically on first run via `setup_ffmpeg.py` if missing)
 * NVIDIA GPU + CUDA (optional, for acceleration)
 
 > On Windows, requirements.txt pins the CUDA 12.4 wheel index for PyTorch.
@@ -89,7 +91,7 @@ tests/                     # End-to-end validation scripts
 ```powershell
 python -m venv .venv
 .\.venv\Scripts\Activate.ps1
-pip install -r requirements.txt --upgrade --no-cache-dir
+pip install -r requirements.txt
 python -m uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 ```
 
@@ -98,7 +100,7 @@ python -m uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 ```bash
 python -m venv .venv
 source .venv/bin/activate
-pip install -r requirements.txt --upgrade --no-cache-dir
+pip install -r requirements.txt
 uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 ```
 
@@ -166,7 +168,7 @@ Whether it’s bug fixes, features, or docs:
 
 ## 🧩 Troubleshooting
 
-* **FFmpeg not found:** install FFmpeg or rely on `imageio-ffmpeg` fallback
+* **FFmpeg not found:** The app tries to auto-install it. Check `.env` for `FFMPEG_AUTO_SETUP=true`.
 * **GPU not used:** check CUDA drivers and run `torch.cuda.is_available()`
 * **Large files slow:** progress bar is an estimate; consider SSE/WebSockets for real-time updates
 

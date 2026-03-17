@@ -15,4 +15,4 @@ templates.env.globals["theme"] = default_theme()
 @router.get("/", response_class=HTMLResponse)
 async def history(request: Request):
     files = list_transcriptions()
-    return templates.TemplateResponse("history.html", {"request": request, "files": files})
+    return templates.TemplateResponse(request=request, name="history.html", context={"files": files})

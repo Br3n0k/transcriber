@@ -37,7 +37,7 @@ async def transcribe_youtube(request: Request, url: str = Form(...)):
         except Exception as cleanup_err:
             logger.warning(f"Falha ao remover arquivo de áudio {media_path}: {cleanup_err}")
         
-        return templates.TemplateResponse("result.html", {"request": request, "text": text, "filename": out_path.name})
+        return templates.TemplateResponse(request=request, name="result.html", context={"text": text, "filename": out_path.name})
     except Exception as e:
         # Tentar limpar o arquivo em caso de erro na transcrição
         if media_path and media_path.exists():
@@ -71,8 +71,8 @@ async def transcribe_upload(request: Request, file: UploadFile = File(...)):
         except Exception as cleanup_err:
             logger.warning(f"Falha ao remover arquivo de áudio {saved_path}: {cleanup_err}")
         
-        context = {"request": request, "text": text, "filename": out_path.name}
-        return templates.TemplateResponse("result.html", context)
+        context = {"text": text, "filename": out_path.name}
+        return templates.TemplateResponse(request=request, name="result.html", context=context)
     except Exception as e:
         # Tentar limpar arquivos em caso de erro na transcrição
         for path_to_clean in [temp_path, saved_path]:

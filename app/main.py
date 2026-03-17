@@ -3,6 +3,11 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from .core.config import settings
 from .core.theme import default_theme
+from .scripts.setup_ffmpeg import setup_ffmpeg
+
+# Executar setup do FFmpeg se configurado
+if settings.ffmpeg_auto_setup:
+    setup_ffmpeg()
 
 app = FastAPI(title=settings.app_name, debug=settings.debug)
 

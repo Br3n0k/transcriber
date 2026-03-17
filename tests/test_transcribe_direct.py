@@ -1,5 +1,10 @@
 #!/usr/bin/env python3
+import sys
 from pathlib import Path
+
+# Adicionar raiz do projeto ao path para permitir importação de 'app'
+sys.path.append(str(Path(__file__).resolve().parents[1]))
+
 from app.services.youtube import download_from_youtube
 from app.services.transcriber import transcribe_file
 

@@ -2,6 +2,10 @@
 import urllib.request
 import urllib.parse
 import sys
+from pathlib import Path
+
+# Adicionar raiz do projeto ao path (opcional, mas bom para consistência)
+sys.path.append(str(Path(__file__).resolve().parents[1]))
 
 def main():
     url = 'http://127.0.0.1:8000/transcribe/youtube'

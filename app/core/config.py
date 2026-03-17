@@ -17,6 +17,9 @@ class Settings(BaseModel):
     storage_transcriptions: Path = Path(os.getenv("STORAGE_TRANSCRIPTIONS", str(BASE_DIR / "storage" / "transcriptions")))
     templates_dir: Path = Path(os.getenv("TEMPLATES_DIR", str(BASE_DIR / "app" / "templates")))
     static_dir: Path = Path(os.getenv("STATIC_DIR", str(BASE_DIR / "app" / "static")))
+    
+    # Auto-setup FFmpeg
+    ffmpeg_auto_setup: bool = os.getenv("FFMPEG_AUTO_SETUP", "true").lower() == "true"
 
 
 settings = Settings()

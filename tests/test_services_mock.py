@@ -7,6 +7,7 @@ import sys
 # O pytest.ini deve garantir que 'app' seja importável
 from app.services.transcriber import transcribe_file
 from app.services.youtube import download_from_youtube
+from app.services.file_manager import list_transcriptions, get_unique_stem
 
 class TestTranscriber:
     @patch("app.services.transcriber._check_ffmpeg_available")
@@ -93,3 +94,53 @@ class TestYoutube:
         args = mock_subprocess.call_args[0][0]
         assert "yt_dlp" in args
         assert "https://youtube.com/watch?v=123" in args
+
+class TestFileManager:
+    @patch("app.services.file_manager.settings")
+    def test_list_transcriptions(self, mock_settings):
+        """Testa listagem de arquivos de transcrição."""
+        # Configurar mocks
+        fake_file1 = MagicMock(spec=Path)
+        fake_file1.name = "file1.txt"
+        fake_file1.suffix = ".txt"
+        fake_file1.is_file.return_value = True
+        fake_file1.stat.return_value.st_mtime = 100
+        
+        fake_file2 = MagicMock(spec=Path)
+        fake_file2.name = "file2.txt"
+        fake_file2.suffix = ".txt"
+        fake_file2.is_file.return_value = True
+        fake_file2.stat.return_value.st_mtime = 200
+        
+        mock_settings.storage_transcriptions.glob.return_value = [fake_file1, fake_file2]
+        
+        # Executar
+        result = list_transcriptions()
+        
+        # Verificar (deve ordenar por data decrescente)
+        assert len(result) == 2
+        assert result[0] == fake_file2
+        assert result[1] == fake_file1
+
+    @patch("app.services.file_manager.settings")
+    def test_get_unique_stem(self, mock_settings):
+        """Testa geração de nomes únicos."""
+        # Simular que 'teste.txt' já existe, mas 'teste-1.txt' não
+        def exists_side_effect(path_str):
+            # O código original verifica: (settings.storage_transcriptions / f"{unique}.txt").exists()
+            # O mock do settings retorna um Path mockado.
+            # Vamos simplificar: assumir que o mock de 'exists' será chamado
+            pass
+            
+        # Mock mais profundo: settings.storage_transcriptions / "nome" retorna um Path
+        mock_path_base = MagicMock()
+        mock_settings.storage_transcriptions.__truediv__.return_value = mock_path_base
+        
+        # Primeiro chamado (teste.txt) existe, segundo (teste-1.txt) não existe
+        mock_path_base.exists.side_effect = [True, False]
+        
+        # Executar
+        result = get_unique_stem("teste")
+        
+        # Verificar
+        assert result == "teste-1"
