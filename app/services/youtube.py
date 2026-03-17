@@ -5,6 +5,7 @@ from typing import Literal, Optional
 import yt_dlp
 
 from ..core.config import settings
+from .file_manager import sanitize_filename
 
 logger = logging.getLogger(__name__)
 
@@ -50,6 +51,19 @@ def download_from_youtube(url: str, audio_only: bool = True) -> Path:
                     path = candidates[0]
             
             logger.info(f"Download concluído: {path}")
+            
+            # Sanitize the filename to remove accents and spaces
+            safe_filename = sanitize_filename(path.name)
+            safe_path = path.with_name(safe_filename)
+            
+            if safe_path != path:
+                # If target exists, we might overwrite or fail.
+                # Since we have ID in filename, collision implies same video.
+                # Rename/move safely.
+                path.replace(safe_path)
+                logger.info(f"Arquivo renomeado para: {safe_path}")
+                return safe_path
+            
             return path
             
     except Exception as e:

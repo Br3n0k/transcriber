@@ -10,7 +10,7 @@ from fastapi.templating import Jinja2Templates
 from ..core.config import settings
 from ..services.youtube import download_from_youtube
 from ..services.transcriber import transcribe_file
-from ..services.file_manager import save_upload, save_transcription, get_unique_stem
+from ..services.file_manager import save_upload, save_transcription, get_unique_stem, sanitize_filename
 from ..services.progress import progress_manager
 from ..core.theme import default_theme
 
@@ -84,8 +84,10 @@ async def transcribe_upload(request: Request, background_tasks: BackgroundTasks,
         task_id = str(uuid.uuid4())
         await progress_manager.create_task(task_id)
         
-        # Salvar arquivo temporário
-        temp_path = Path(settings.storage_uploads) / f"{task_id}_{file.filename}"
+        # Salvar arquivo temporário (sanitizando o nome para evitar problemas com ffmpeg)
+        safe_filename = sanitize_filename(file.filename)
+        temp_path = Path(settings.storage_uploads) / f"{task_id}_{safe_filename}"
+        
         with temp_path.open("wb") as f:
             while chunk := await file.read(1024 * 1024):
                 f.write(chunk)
