@@ -11,10 +11,13 @@ from app.services.file_manager import list_transcriptions, get_unique_stem
 
 class TestTranscriber:
     @patch("app.services.transcriber._check_ffmpeg_available")
-    def test_transcribe_openai_whisper(self, mock_check_ffmpeg):
+    @patch("app.services.transcriber.settings") # Mock settings
+    def test_transcribe_openai_whisper(self, mock_settings, mock_check_ffmpeg):
         """Testa transcrição usando openai-whisper quando ffmpeg está disponível."""
         # Configurar mocks
         mock_check_ffmpeg.return_value = True
+        mock_settings.whisper_model_default = "base"
+        mock_settings.transcription_device = "cpu"
         
         mock_whisper = MagicMock()
         mock_model = MagicMock()
@@ -22,6 +25,7 @@ class TestTranscriber:
         mock_whisper.load_model.return_value = mock_model
         
         # Mockar o módulo 'whisper' em sys.modules para que 'import whisper' funcione
+        # Como o código faz 'import whisper' dentro da função, precisamos que sys.modules['whisper'] exista
         with patch.dict(sys.modules, {'whisper': mock_whisper}):
             # Executar
             callback = MagicMock()
@@ -35,10 +39,13 @@ class TestTranscriber:
         assert callback.call_count >= 2
 
     @patch("app.services.transcriber._check_ffmpeg_available")
-    def test_transcribe_faster_whisper(self, mock_check_ffmpeg):
+    @patch("app.services.transcriber.settings") # Mock settings
+    def test_transcribe_faster_whisper(self, mock_settings, mock_check_ffmpeg):
         """Testa transcrição usando faster-whisper quando ffmpeg NÃO está disponível."""
         # Configurar mocks
         mock_check_ffmpeg.return_value = False
+        mock_settings.whisper_model_default = "base"
+        mock_settings.transcription_device = "cpu"
         
         mock_faster_whisper = MagicMock()
         mock_model_cls = MagicMock()

@@ -89,18 +89,19 @@ def transcribe_file(
         logger.info("ffmpeg disponível; openai-whisper habilitado")
 
     # Preferir GPU (CUDA) se disponível, senão CPU (ou conforme config)
-    force_device = settings.whisper_device_fallback.lower()
+    # Configuração global de dispositivo: auto, cuda, cpu
+    force_device = settings.transcription_device
     
     if force_device == "cuda":
         gpu_available = bool(torch is not None and getattr(torch.cuda, "is_available", lambda: False)())
         if not gpu_available:
-            logger.warning("Configurado WHISPER_DEVICE=cuda, mas CUDA não está disponível. Recuando para CPU.")
+            logger.warning("Configurado TRANSCRIPTION_DEVICE=cuda, mas CUDA não está disponível. Recuando para CPU.")
             device = "cpu"
         else:
             device = "cuda"
     elif force_device == "cpu":
         device = "cpu"
-        gpu_available = False # Forçar modo CPU
+        gpu_available = False # Forçar modo CPU mesmo se tiver GPU
     else: # auto
         gpu_available = bool(torch is not None and getattr(torch.cuda, "is_available", lambda: False)())
         device = "cuda" if gpu_available else "cpu"

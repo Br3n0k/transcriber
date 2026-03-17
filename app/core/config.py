@@ -23,7 +23,8 @@ class Settings(BaseModel):
     
     # Whisper Settings
     whisper_model_default: str = os.getenv("WHISPER_MODEL", "base")
-    whisper_device_fallback: str = os.getenv("WHISPER_DEVICE", "cpu") # 'cuda' or 'cpu' forced preference
+    # Transcription Device: 'auto' (prefer GPU), 'cuda' (force GPU), 'cpu' (force CPU)
+    transcription_device: str = os.getenv("TRANSCRIPTION_DEVICE", "auto").lower()
 
 
 settings = Settings()
