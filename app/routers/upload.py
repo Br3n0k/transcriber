@@ -1,23 +1,18 @@
 from __future__ import annotations
 from pathlib import Path
-import os
 import logging
 import uuid
 import asyncio
 from fastapi import APIRouter, File, Form, HTTPException, UploadFile, Request, BackgroundTasks
-from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
-from fastapi.templating import Jinja2Templates
+from fastapi.responses import HTMLResponse
 from ..core.config import settings
 from ..services.youtube import download_from_youtube
 from ..services.transcriber import transcribe_file
 from ..services.file_manager import save_upload, save_transcription, get_unique_stem, sanitize_filename
 from ..services.progress import progress_manager
-from ..core.theme import default_theme
+from ..core.templates import templates
 
 router = APIRouter(prefix="/transcribe")
-
-templates = Jinja2Templates(directory=str(settings.templates_dir))
-templates.env.globals["theme"] = default_theme()
 
 logger = logging.getLogger(__name__)
 

@@ -22,6 +22,8 @@ Built with **FastAPI**, **WebSockets**, **Alpine.js**, and **Tailwind CSS** for 
 
 * 🎥 **YouTube & Local Support:** Transcribe directly from YouTube URLs or upload `.mp3`, `.mp4`, `.wav`, and more.
 * 🚀 **Real-Time Progress:** Watch the transcription status live via **WebSockets** — no more guessing when it finishes.
+* 📚 **Smart Library:** Manage your media and transcriptions in one place. Auto-correlates audio files with their transcripts and allows one-click cleanup of paired files.
+* 🛡️ **Filename Sanitization:** Automatic handling of special characters, accents, and spaces in filenames for robust cross-platform compatibility.
 * 🤖 **Dual AI Engine:**
   * **openai-whisper**: High accuracy (default when FFmpeg is available).
   * **faster-whisper**: Blazing fast inference with seamless fallback.
@@ -30,7 +32,7 @@ Built with **FastAPI**, **WebSockets**, **Alpine.js**, and **Tailwind CSS** for 
   * **Auto-FFmpeg:** Automatically detects or installs FFmpeg locally (Windows/Linux/Mac).
   * **yt-dlp Python API:** Robust media downloading without external binary dependencies.
 * 🐳 **Production Ready:** Optimized **Docker** image (multi-stage build, non-root user, secure).
-* 🌓 **Modern UI:** Dark/light mode, responsive design, and history management.
+* 🌓 **Modern UI:** Dark/light mode, responsive design, history management, and file library.
 
 ---
 
@@ -44,6 +46,7 @@ Built with **FastAPI**, **WebSockets**, **Alpine.js**, and **Tailwind CSS** for 
   * `imageio-ffmpeg` (Auto-setup)
   * `torch` (PyTorch with CUDA 12.4 support)
 * **DevOps:** Docker (Multi-stage), GitHub Actions (CI), Pytest
+* **Storage:** Local filesystem with smart correlation (Library)
 
 ---
 
@@ -59,12 +62,13 @@ app/
  │   ├─ home.py            # UI: Homepage
  │   ├─ upload.py          # API: Handle file/YouTube uploads
  │   ├─ websocket.py       # API: Real-time progress updates
+ │   ├─ library.py         # API: Manage audio/transcription files
  │   └─ history.py         # UI: Transcription history
  ├─ services/
  │   ├─ progress.py        # Task state management
  │   ├─ youtube.py         # yt-dlp integration
  │   ├─ transcriber.py     # Whisper engine & FFmpeg logic
- │   └─ file_manager.py    # File I/O operations
+ │   └─ file_manager.py    # File I/O operations & Sanitization
  ├─ scripts/
  │   └─ setup_ffmpeg.py    # Auto-installer for FFmpeg
  ├─ templates/             # Jinja2 + Alpine.js templates
