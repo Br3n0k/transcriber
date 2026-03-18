@@ -18,9 +18,6 @@ class Settings(BaseModel):
     templates_dir: Path = Path(os.getenv("TEMPLATES_DIR", str(BASE_DIR / "app" / "templates")))
     static_dir: Path = Path(os.getenv("STATIC_DIR", str(BASE_DIR / "app" / "static")))
     
-    # Auto-setup FFmpeg
-    ffmpeg_auto_setup: bool = os.getenv("FFMPEG_AUTO_SETUP", "true").lower() == "true"
-    
     # Whisper Settings
     whisper_model_default: str = os.getenv("WHISPER_MODEL", "base")
     # Transcription Device: 'auto' (prefer GPU), 'cuda' (force GPU), 'cpu' (force CPU)

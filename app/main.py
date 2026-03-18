@@ -1,12 +1,7 @@
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 from .core.config import settings
-from .scripts.setup_ffmpeg import setup_ffmpeg
 from .core.templates import templates  # Importa templates configurados
-
-# Executar setup do FFmpeg se configurado
-if settings.ffmpeg_auto_setup:
-    setup_ffmpeg()
 
 app = FastAPI(title=settings.app_name, debug=settings.debug)
 

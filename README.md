@@ -83,11 +83,11 @@ tests/                     # Unit & Integration tests
 
 ## ⚙️ Requirements
 
-* **Python 3.10+** (Tested on 3.13)
+* **Python 3.10 to 3.12** (Highly Recommended for GPU support)
 * **FFmpeg**: Installed automatically on first run (or via system PATH).
 * **NVIDIA GPU** (Optional): For faster transcription.
 
-> **Note:** The `requirements.txt` includes `--extra-index-url` to ensure the correct PyTorch version with CUDA 12.4 support is installed.
+> **⚠️ Important Note on Python 3.13+:** The official PyTorch binaries with CUDA support often lag behind the latest Python releases. If you are using Python 3.13 or 3.14, `pip install torch` might fallback to the CPU-only version. For the best experience with NVIDIA GPUs, please use Python 3.10, 3.11, or 3.12.
 
 ---
 
@@ -98,18 +98,28 @@ tests/                     # Unit & Integration tests
 **Windows (PowerShell):**
 
 ```powershell
+# Create and activate virtual environment
 python -m venv .venv
 .\.venv\Scripts\Activate.ps1
-pip install -r requirements.txt
+
+# Run the automated installer (installs GPU support + dependencies)
+python install.py
+
+# Start the application
 python -m uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 ```
 
 **macOS/Linux:**
 
 ```bash
+# Create and activate virtual environment
 python -m venv .venv
 source .venv/bin/activate
-pip install -r requirements.txt
+
+# Run the automated installer
+python install.py
+
+# Start the application
 uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 ```
 
@@ -176,8 +186,11 @@ Feel free to open an issue or submit a PR.
 
 ## 🧩 Troubleshooting
 
-* **FFmpeg Error:** The app tries to auto-install FFmpeg. If it fails, check `FFMPEG_AUTO_SETUP=true` in `.env` or install FFmpeg manually.
-* **Slow Transcription:** Ensure your GPU is detected. Check console logs for `usando CUDA`.
+* **FFmpeg Error:** The app requires FFmpeg. The `install.py` script attempts to download it automatically. If it fails, you may need to install FFmpeg manually and add it to your system's PATH.
+* **Slow Transcription / CPU instead of GPU:** If you have an NVIDIA GPU but the app is still using the CPU, it's likely that pip installed the CPU-only version of PyTorch. Run the included setup script to force-install the CUDA version:
+  ```bash
+  python install.py
+  ```
 * **WebSocket Error:** If behind a proxy (Nginx/Apache), ensure WebSocket upgrades are allowed.
 
 ---
