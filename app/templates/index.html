@@ -1,22 +1,65 @@
 {% extends 'base.html' %}
 {% block content %}
-<section class="max-w-3xl mx-auto px-4 py-12">
-  <h1 class="text-3xl font-bold mb-6">Transcreva vídeos do YouTube ou arquivos locais</h1>
+<section class="max-w-4xl mx-auto py-8 sm:py-12">
+  <div class="text-center mb-10 sm:mb-16">
+    <h1 class="text-3xl sm:text-4xl md:text-5xl font-extrabold tracking-tight mb-4 text-gray-900 dark:text-white">
+      Transcribe <span class="text-primary">Videos</span> and <span class="text-secondary">Audio</span>
+    </h1>
+    <p class="text-lg text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
+      Quickly transform media content into text using highly accurate local artificial intelligence.
+    </p>
+  </div>
 
-  <div class="bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-6 space-y-6">
-    <form id="yt-form" class="space-y-4" action="/transcribe/youtube" method="post">
-      <label class="block text-sm font-medium" for="yt-url">URL do YouTube</label>
-      <input id="yt-url" name="url" type="url" required placeholder="https://youtube.com/watch?v=..." class="w-full px-3 py-2 rounded border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900" />
-      <button type="submit" class="btn btn-primary">Transcrever do YouTube</button>
-    </form>
+  <div class="grid md:grid-cols-2 gap-6 sm:gap-8">
+    <!-- Card YouTube -->
+    <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl p-6 sm:p-8 shadow-sm hover:shadow-md transition-shadow">
+      <div class="flex items-center gap-3 mb-6">
+        <div class="p-3 bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 rounded-xl">
+          <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M21.582,6.186c-0.23-0.86-0.908-1.538-1.768-1.768C18.254,4,12,4,12,4S5.746,4,4.186,4.418c-0.86,0.23-1.538,0.908-1.768,1.768C2,7.746,2,12,2,12s0,4.254,0.418,5.814c0.23,0.86,0.908,1.538,1.768,1.768C5.746,20,12,20,12,20s6.254,0,7.814-0.418c0.861-0.23,1.538-0.908,1.768-1.768C22,16.254,22,12,22,12S22,7.746,21.582,6.186z M10,15.464V8.536L16,12L10,15.464z"></path></svg>
+        </div>
+        <h2 class="text-xl font-bold">YouTube Link</h2>
+      </div>
+      
+      <form id="yt-form" class="space-y-5" action="/transcribe/youtube" method="post">
+        <div class="space-y-1.5">
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300" for="yt-url">Video URL</label>
+          <input id="yt-url" name="url" type="url" required placeholder="https://youtube.com/watch?v=..." 
+            class="w-full px-4 py-2.5 rounded-xl border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-primary/50 focus:border-primary outline-none transition-all" />
+        </div>
+        <button type="submit" class="btn btn-primary w-full group">
+          <span>Extract and Transcribe</span>
+          <svg class="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+        </button>
+      </form>
+    </div>
 
-    <div class="text-center text-sm text-gray-500">ou</div>
+    <!-- Card Upload -->
+    <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl p-6 sm:p-8 shadow-sm hover:shadow-md transition-shadow">
+      <div class="flex items-center gap-3 mb-6">
+        <div class="p-3 bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-xl">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+        </div>
+        <h2 class="text-xl font-bold">Local File</h2>
+      </div>
 
-    <form id="upload-form" class="space-y-4" action="/transcribe/upload" method="post" enctype="multipart/form-data">
-      <label class="block text-sm font-medium" for="local-file">Arquivo local (.mp3, .mp4, .wav)</label>
-      <input id="local-file" name="file" type="file" accept="audio/*,video/*" required class="w-full px-3 py-2 rounded border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900" />
-      <button type="submit" class="btn btn-secondary">Transcrever arquivo</button>
-    </form>
+      <form id="upload-form" class="space-y-5" action="/transcribe/upload" method="post" enctype="multipart/form-data">
+        <div class="space-y-1.5">
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300" for="local-file">Media Upload</label>
+          <div class="relative group cursor-pointer">
+            <input id="local-file" name="file" type="file" accept="audio/*,video/*" required 
+              class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" />
+            <div class="w-full px-4 py-8 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-xl bg-gray-50 dark:bg-gray-900 text-center group-hover:border-secondary transition-colors">
+              <svg class="mx-auto h-8 w-8 text-gray-400 dark:text-gray-500 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3"></path></svg>
+              <span class="text-sm text-gray-500 dark:text-gray-400">Click or drag a file (.mp3, .mp4, .wav)</span>
+            </div>
+          </div>
+        </div>
+        <button type="submit" class="btn btn-secondary w-full group">
+          <span>Upload and Transcribe</span>
+          <svg class="w-4 h-4 ml-2 group-hover:-translate-y-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+        </button>
+      </form>
+    </div>
   </div>
 </section>
 {% endblock %}

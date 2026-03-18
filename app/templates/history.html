@@ -1,17 +1,43 @@
 {% extends 'base.html' %}
 {% block content %}
-<section class="max-w-3xl mx-auto px-4 py-10">
-  <h2 class="text-2xl font-semibold mb-4">Histórico de Transcrições</h2>
-<ul class="space-y-2">
-  {%- for f in files %}
-    <li class="flex items-center justify-between bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded p-3">
-      <span>{{ f.name }}</span>
-      <a href="/download/{{ f.name }}" class="text-sm underline">baixar</a>
-    </li>
-  {%- else %}
-    <li class="text-gray-500">Nenhuma transcrição encontrada.</li>
-  {%- endfor %}
-</ul>
+<section class="max-w-4xl mx-auto py-8 sm:py-12">
+  <div class="flex items-center justify-between mb-8">
+    <h2 class="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">Transcription History</h2>
+    <span class="text-sm font-medium px-3 py-1 bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 rounded-full">{{ files|length }} files</span>
+  </div>
+
+  {% if files %}
+  <div class="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm overflow-hidden">
+    <ul class="divide-y divide-gray-200 dark:divide-gray-700">
+      {% for f in files %}
+        <li class="p-4 sm:p-6 hover:bg-gray-50 dark:hover:bg-gray-750 transition-colors flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div class="flex items-start gap-4 overflow-hidden">
+            <div class="p-2 bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 rounded-lg flex-shrink-0 mt-1 sm:mt-0">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+            </div>
+            <div class="min-w-0 flex-1">
+              <p class="text-sm font-medium text-gray-900 dark:text-gray-100 truncate" title="{{ f.name }}">{{ f.name }}</p>
+              <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">.txt</p>
+            </div>
+          </div>
+          <a href="/download/{{ f.name }}" class="btn btn-secondary text-sm py-2 w-full sm:w-auto flex-shrink-0 group">
+            <svg class="w-4 h-4 mr-2 group-hover:-translate-y-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+            Download
+          </a>
+        </li>
+      {% endfor %}
+    </ul>
+  </div>
+  {% else %}
+  <div class="text-center py-16 px-4 bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 border-dashed">
+    <svg class="mx-auto h-12 w-12 text-gray-400 dark:text-gray-500 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+    <h3 class="text-lg font-medium text-gray-900 dark:text-white">No transcriptions found</h3>
+    <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">You haven't transcribed any files yet.</p>
+    <div class="mt-6">
+      <a href="/" class="btn btn-primary">Start your first transcription</a>
+    </div>
+  </div>
+  {% endif %}
 </section>
 {% endblock %}
 

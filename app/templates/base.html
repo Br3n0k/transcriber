@@ -1,43 +1,105 @@
 <!doctype html>
-<html lang="pt-br" x-data="{ dark: localStorage.getItem('theme') === 'dark' }" x-init="$watch('dark', v => {localStorage.setItem('theme', v ? 'dark' : 'light'); document.documentElement.classList.toggle('dark', v)})">
+<!-- Set dark mode as default via class="dark" and initialize Alpine.js to respect it -->
+<html lang="en" class="dark" x-data="{ dark: localStorage.getItem('theme') !== 'light' }" x-init="$watch('dark', v => {localStorage.setItem('theme', v ? 'dark' : 'light'); document.documentElement.classList.toggle('dark', v)})">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{{ theme and theme.primary and 'Transcriber' or 'Transcriber' }}</title>
   <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
   <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            primary: 'var(--color-primary)',
+            secondary: 'var(--color-secondary)',
+            accent: 'var(--color-accent)',
+          },
+          animation: {
+            'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+            'gradient': 'gradient 15s ease infinite',
+          },
+          keyframes: {
+            gradient: {
+              '0%, 100%': { backgroundPosition: '0% 50%' },
+              '50%': { backgroundPosition: '100% 50%' },
+            }
+          }
+        }
+      }
+    }
+  </script>
   <style>
-    :root { --color-primary: {{ theme.primary }}; --color-secondary: {{ theme.secondary }}; --color-accent: {{ theme.accent }}; }
-    .text-primary { color: var(--color-primary); }
-    .bg-primary { background-color: var(--color-primary); }
-    .btn { padding: 0.5rem 1rem; border-radius: 0.5rem; color: #ffffff; display: inline-block; }
+    :root { 
+      --color-primary: {{ theme.primary }}; 
+      --color-secondary: {{ theme.secondary }}; 
+      --color-accent: {{ theme.accent }}; 
+    }
+    /* Ensure styles applied immediately before Alpine runs to avoid flash */
+    html:not(.dark) { background-color: #f8fafc; color: #111827; }
+    html.dark { background-color: #0f172a; color: #f3f4f6; }
+    
+    .btn { 
+      padding: 0.625rem 1.25rem; 
+      border-radius: 0.5rem; 
+      color: #ffffff; 
+      display: inline-flex; 
+      align-items: center;
+      justify-content: center;
+      font-weight: 500;
+      transition: all 0.2s ease-in-out;
+    }
+    .btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    }
+    .btn:active {
+      transform: translateY(0);
+    }
     .btn-primary { background-color: var(--color-primary); }
+    .btn-primary:hover { filter: brightness(110%); }
     .btn-secondary { background-color: var(--color-secondary); }
+    .btn-secondary:hover { filter: brightness(110%); }
     .btn-accent { background-color: var(--color-accent); }
   </style>
 </head>
-<body class="bg-white text-gray-900 dark:bg-gray-900 dark:text-gray-100 min-h-screen flex flex-col">
-  <header class="border-b border-gray-200 dark:border-gray-800">
-    <div class="max-w-5xl mx-auto px-4 py-4 flex items-center justify-between">
-      <a href="/" class="text-xl font-semibold text-primary">Transcriber</a>
-      <div class="flex items-center gap-4">
-        <a href="/library" class="text-sm hover:underline">Biblioteca</a>
-        <a href="/history" class="text-sm hover:underline">Histórico</a>
-        <button class="px-3 py-1 rounded border border-gray-300 dark:border-gray-700 text-sm" @click="dark = !dark">
-          <span x-show="!dark">Dark</span>
-          <span x-show="dark">Light</span>
+<body class="bg-gradient-to-br from-gray-50 via-gray-100 to-gray-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 bg-[length:200%_200%] animate-gradient text-gray-900 dark:text-gray-100 min-h-screen flex flex-col transition-colors duration-500">
+  <header class="sticky top-0 z-50 bg-white/70 dark:bg-gray-900/70 backdrop-blur-md border-b border-gray-200/50 dark:border-gray-800/50">
+    <div class="max-w-6xl mx-auto px-4 py-4 flex flex-wrap items-center justify-between gap-4">
+      <a href="/" class="text-2xl font-black tracking-wider text-primary uppercase flex items-center gap-2 group">
+        <svg class="w-8 h-8 group-hover:animate-pulse-slow" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"></path></svg>
+        <span>Transcriber</span>
+      </a>
+      <div class="flex items-center gap-4 sm:gap-6">
+        <nav class="flex items-center gap-4 text-sm font-medium">
+          <a href="/library" class="hover:text-primary transition-colors">Library</a>
+          <a href="/history" class="hover:text-primary transition-colors">History</a>
+        </nav>
+        <button class="p-2 rounded-full bg-gray-200 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-700 transition-colors" @click="dark = !dark" aria-label="Toggle Dark Mode">
+          <!-- Sun Icon (shows when dark) -->
+          <svg x-show="dark" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+          <!-- Moon Icon (shows when light) -->
+          <svg x-show="!dark" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg>
         </button>
       </div>
     </div>
   </header>
 
-  <main class="flex-1">
+  <main class="flex-1 w-full max-w-6xl mx-auto p-4 sm:p-6 lg:p-8">
     {% block content %}{% endblock %}
   </main>
 
-  <footer class="border-t border-gray-200 dark:border-gray-800">
-    <div class="max-w-5xl mx-auto px-4 py-6 text-sm text-gray-500">
-      © {{ 2025 }} Transcriber — Open Source - Development by <a href="https://github.com/Br3n0k" target="_blank" rel="noopener">Brendown Ferreira</a>
+  <footer class="border-t border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950 mt-auto">
+    <div class="max-w-6xl mx-auto px-4 py-8 flex flex-col md:flex-row items-center justify-between gap-4 text-sm text-gray-500 dark:text-gray-400">
+      <div class="flex items-center gap-2">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"></path></svg>
+        <span>© {{ 2025 }} Transcriber | <a href="https://github.com/Br3n0k/transcriber" target="_blank" rel="noopener" class="font-medium text-primary hover:underline">Project Open Source</a></span>
+      </div>
+      <div>
+        Developed by <a href="https://github.com/Br3n0k" target="_blank" rel="noopener" class="font-medium text-primary hover:underline">Brendown Ferreira</a>
+      </div>
     </div>
   </footer>
 </body>

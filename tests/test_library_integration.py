@@ -22,7 +22,7 @@ def test_library_page_render():
         if response.status_code != 200:
             print(f"Error content: {response.text}")
         assert response.status_code == 200
-        assert "Biblioteca de Arquivos" in response.text
+        assert "File Library" in response.text
         assert "test_render.txt" in response.text
         assert "test_render.mp3" in response.text
     finally:

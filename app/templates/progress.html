@@ -1,52 +1,55 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<section class="max-w-3xl mx-auto px-4 py-12" x-data="progressApp('{{ task_id }}')">
-  <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-8 shadow-sm text-center">
+<section class="max-w-3xl mx-auto px-4 py-8 sm:py-12" x-data="progressApp('{{ task_id }}')">
+  <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl p-6 sm:p-10 shadow-sm text-center">
     
-    <!-- Estado: Processando -->
+    <!-- State: Processing -->
     <template x-if="status !== 'completed' && status !== 'failed'">
       <div class="space-y-6">
-        <h2 class="text-2xl font-bold animate-pulse" x-text="message || 'Iniciando...'"></h2>
+        <h2 class="text-2xl font-bold animate-pulse text-gray-900 dark:text-gray-100" x-text="message || 'Starting...'"></h2>
         
-        <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-4 overflow-hidden">
-          <div class="bg-blue-600 h-4 rounded-full transition-all duration-300 ease-out"
+        <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-4 overflow-hidden shadow-inner">
+          <div class="bg-primary h-4 rounded-full transition-all duration-300 ease-out"
                :style="`width: ${progress}%`"></div>
         </div>
         
         <p class="text-gray-500 dark:text-gray-400 font-mono" x-text="`${progress}%`"></p>
         
         <div class="text-sm text-gray-400 mt-4">
-          Task ID: <span class="font-mono text-xs select-all" x-text="taskId"></span>
+          Task ID: <span class="font-mono text-xs select-all bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded" x-text="taskId"></span>
         </div>
       </div>
     </template>
 
-    <!-- Estado: Concluído -->
+    <!-- State: Completed -->
     <template x-if="status === 'completed'">
       <div class="space-y-6 text-left">
-        <div class="flex items-center justify-between border-b pb-4 mb-4 border-gray-100 dark:border-gray-700">
-          <h2 class="text-2xl font-semibold text-green-600 dark:text-green-400">Transcrição Concluída!</h2>
-          <a :href="`/download/${result.filename}`" class="btn btn-primary text-sm">Baixar Arquivo (.txt)</a>
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between border-b pb-4 mb-4 border-gray-200 dark:border-gray-700 gap-4">
+          <h2 class="text-2xl font-semibold text-green-600 dark:text-green-400 flex items-center gap-2">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+            Transcription Completed!
+          </h2>
+          <a :href="`/download/${result.filename}`" class="btn btn-primary text-sm w-full sm:w-auto text-center">Download File (.txt)</a>
         </div>
         
-        <div class="bg-gray-50 dark:bg-gray-900 p-4 rounded border border-gray-200 dark:border-gray-700 font-mono text-sm whitespace-pre-wrap max-h-[60vh] overflow-y-auto"
+        <div class="bg-gray-50 dark:bg-gray-900 p-4 sm:p-6 rounded-xl border border-gray-200 dark:border-gray-700 font-mono text-sm whitespace-pre-wrap max-h-[60vh] overflow-y-auto text-gray-800 dark:text-gray-300"
              x-text="result.text"></div>
              
         <div class="text-center pt-4">
-          <a href="/" class="text-blue-600 hover:underline">Transcrever outro arquivo</a>
+          <a href="/" class="text-primary hover:text-secondary font-medium transition-colors hover:underline">Transcribe another file</a>
         </div>
       </div>
     </template>
 
-    <!-- Estado: Falha -->
+    <!-- State: Failed -->
     <template x-if="status === 'failed'">
       <div class="space-y-6">
         <div class="text-red-500 text-6xl mb-4">⚠️</div>
-        <h2 class="text-2xl font-bold text-red-600">Erro na Transcrição</h2>
+        <h2 class="text-2xl font-bold text-red-600 dark:text-red-400">Transcription Error</h2>
         <p class="text-gray-700 dark:text-gray-300" x-text="message"></p>
         <div class="pt-6">
-          <a href="/" class="btn btn-secondary">Tentar Novamente</a>
+          <a href="/" class="btn btn-secondary">Try Again</a>
         </div>
       </div>
     </template>
@@ -60,7 +63,7 @@
       taskId: taskId,
       status: 'pending', // pending, processing, completed, failed
       progress: 0,
-      message: 'Conectando...',
+      message: 'Connecting...',
       result: null,
       socket: null,
       

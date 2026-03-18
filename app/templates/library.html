@@ -1,86 +1,108 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<div class="max-w-6xl mx-auto px-4 py-8">
-    <div class="flex justify-between items-center mb-6">
-        <h2 class="text-2xl font-bold text-gray-800 dark:text-gray-100">Biblioteca de Arquivos</h2>
-        <span class="text-sm text-gray-500 dark:text-gray-400">Gerencie suas transcrições e áudios</span>
+<div class="max-w-6xl mx-auto px-4 py-8 sm:py-12">
+    <div class="flex flex-col sm:flex-row sm:justify-between sm:items-end mb-8 gap-4">
+        <div>
+            <h2 class="text-3xl font-extrabold text-gray-900 dark:text-white tracking-tight">File Library</h2>
+            <p class="mt-2 text-sm text-gray-600 dark:text-gray-400">Manage and organize your generated transcriptions and source audio files.</p>
+        </div>
+        <div class="flex items-center gap-2">
+            <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-primary/10 text-primary dark:bg-primary/20">
+                {{ items|length }} Items
+            </span>
+        </div>
     </div>
 
-    <div class="bg-white dark:bg-gray-800 shadow rounded-lg overflow-hidden">
-        <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-            <thead class="bg-gray-50 dark:bg-gray-700">
-                <tr>
-                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                        Transcrição
-                    </th>
-                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                        Áudio Associado
-                    </th>
-                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                        Data
-                    </th>
-                    <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                        Ações
-                    </th>
-                </tr>
-            </thead>
-            <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-                {% for item in items %}
-                <tr class="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
-                    <td class="px-6 py-4 whitespace-nowrap">
+    <div class="grid gap-4">
+        {% for item in items %}
+        <div class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm border border-gray-200/80 dark:border-gray-700/80 rounded-2xl p-5 hover:shadow-lg transition-all duration-300 group">
+            <div class="flex flex-col md:flex-row gap-6 items-start md:items-center justify-between">
+                
+                <!-- Files Info -->
+                <div class="flex-1 grid sm:grid-cols-2 gap-6 w-full">
+                    
+                    <!-- Transcription -->
+                    <div>
+                        <span class="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-3 block">Transcription</span>
                         {% if item.transcription %}
-                        <div class="flex items-center">
-                            <div class="flex-shrink-0 h-8 w-8 flex items-center justify-center rounded bg-blue-100 text-blue-500">
+                        <div class="flex items-start gap-3">
+                            <div class="p-2.5 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 rounded-xl shrink-0 group-hover:scale-110 transition-transform duration-300">
                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
                             </div>
-                            <div class="ml-4">
-                                <div class="text-sm font-medium text-gray-900 dark:text-gray-100">{{ item.transcription }}</div>
-                                <div class="text-xs text-gray-500 dark:text-gray-400">{{ (item.size / 1024)|round(1) }} KB</div>
+                            <div class="min-w-0">
+                                <p class="text-sm font-semibold text-gray-900 dark:text-gray-100 truncate" title="{{ item.transcription }}">{{ item.transcription }}</p>
+                                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1 font-medium">{{ (item.size / 1024)|round(1) }} KB</p>
                             </div>
                         </div>
                         {% else %}
-                        <span class="text-xs text-gray-400 italic">Sem transcrição</span>
+                        <div class="flex items-center gap-2 text-gray-400 dark:text-gray-500">
+                            <svg class="w-5 h-5 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"></path></svg>
+                            <span class="text-sm italic">No transcription</span>
+                        </div>
                         {% endif %}
-                    </td>
-                    <td class="px-6 py-4 whitespace-nowrap">
+                    </div>
+
+                    <!-- Audio Source -->
+                    <div>
+                        <span class="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-3 block">Audio Source</span>
                         {% if item.audio %}
-                        <div class="flex items-center">
-                            <div class="flex-shrink-0 h-8 w-8 flex items-center justify-center rounded bg-purple-100 text-purple-500">
+                        <div class="flex items-start gap-3">
+                            <div class="p-2.5 bg-purple-50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400 rounded-xl shrink-0 group-hover:scale-110 transition-transform duration-300">
                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"></path></svg>
                             </div>
-                            <div class="ml-4">
-                                <div class="text-sm text-gray-900 dark:text-gray-100">{{ item.audio }}</div>
+                            <div class="min-w-0">
+                                <p class="text-sm font-semibold text-gray-900 dark:text-gray-100 truncate" title="{{ item.audio }}">{{ item.audio }}</p>
+                                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1 font-medium">Original File</p>
                             </div>
                         </div>
                         {% else %}
-                        <span class="text-xs text-gray-400 italic">Áudio removido</span>
-                        {% endif %}
-                    </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                        {{ item.date | timestamp_to_date }}
-                    </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                        <div class="flex justify-end space-x-3">
-                            {% if item.transcription %}
-                            <a href="/download/{{ item.transcription }}" class="text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-300" title="Baixar Transcrição">
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
-                            </a>
-                            {% endif %}
-                            
-                            <form action="/library/delete" method="POST" onsubmit="return confirm('Tem certeza que deseja excluir este item? Esta ação removerá a transcrição e o áudio associado.');" class="inline">
-                                <input type="hidden" name="transcription_path" value="{{ item.transcription_path or '' }}">
-                                <input type="hidden" name="audio_path" value="{{ item.audio_path or '' }}">
-                                <button type="submit" class="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300" title="Excluir">
-                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
-                                </button>
-                            </form>
+                        <div class="flex items-center gap-2 text-gray-400 dark:text-gray-500">
+                            <svg class="w-5 h-5 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                            <span class="text-sm italic">Audio removed</span>
                         </div>
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Metadata & Actions -->
+                <div class="flex items-center justify-between md:justify-end w-full md:w-auto gap-6 border-t md:border-t-0 border-gray-100 dark:border-gray-700/50 pt-4 md:pt-0 mt-2 md:mt-0">
+                    <div class="text-sm font-medium text-gray-500 dark:text-gray-400 whitespace-nowrap flex items-center gap-2 bg-gray-50 dark:bg-gray-800/50 px-3 py-1.5 rounded-lg">
+                        <svg class="w-4 h-4 opacity-70" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                        {{ item.date | timestamp_to_date }}
+                    </div>
+                    
+                    <div class="flex items-center gap-2">
+                        {% if item.transcription %}
+                        <a href="/download/{{ item.transcription }}" class="p-2 text-gray-500 hover:text-indigo-600 hover:bg-indigo-50 dark:text-gray-400 dark:hover:text-indigo-400 dark:hover:bg-indigo-900/20 rounded-xl transition-all duration-200" title="Download Transcription">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                        </a>
+                        {% endif %}
+                        
+                        <form action="/library/delete" method="POST" onsubmit="return confirm('Are you sure you want to delete this item? This action will remove both the transcription and associated audio.');" class="m-0">
+                            <input type="hidden" name="transcription_path" value="{{ item.transcription_path or '' }}">
+                            <input type="hidden" name="audio_path" value="{{ item.audio_path or '' }}">
+                            <button type="submit" class="p-2 text-gray-500 hover:text-red-600 hover:bg-red-50 dark:text-gray-400 dark:hover:text-red-400 dark:hover:bg-red-900/20 rounded-xl transition-all duration-200" title="Delete">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                            </button>
+                        </form>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+        {% endfor %}
+
+        {% if not items %}
+        <div class="text-center py-20 px-4 bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm rounded-2xl border border-gray-200 border-dashed dark:border-gray-700">
+            <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gray-100 dark:bg-gray-800 mb-4 text-gray-400 dark:text-gray-500">
+                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 19a2 2 0 01-2-2V7a2 2 0 012-2h4l2 2h4a2 2 0 012 2v1M5 19h14a2 2 0 002-2v-5a2 2 0 00-2-2H9a2 2 0 00-2 2v5a2 2 0 01-2 2z"></path></svg>
+            </div>
+            <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-1">Library is empty</h3>
+            <p class="text-sm text-gray-500 dark:text-gray-400 mb-6 max-w-md mx-auto">You haven't generated any transcriptions yet. Once you transcribe an audio or video, it will appear here.</p>
+            <a href="/" class="btn btn-primary shadow-lg shadow-primary/30">Start Transcribing</a>
+        </div>
+        {% endif %}
     </div>
 </div>
 {% endblock %}
