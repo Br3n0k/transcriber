@@ -1,5 +1,5 @@
 fastapi
-uvicorn
+uvicorn[standard]
 jinja2
 python-multipart
 python-dotenv
@@ -11,3 +11,4 @@ imageio-ffmpeg
 pytest
 httpx
 requests
+websockets
